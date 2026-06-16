@@ -310,7 +310,7 @@ nav { -webkit-overflow-scrolling: touch; }
     </div>
     <div style="font-family:'DM Sans',system-ui;font-size:22px;font-weight:600;color:#F0F1F7;margin-bottom:8px;">FinanceAI</div>
     <div style="font-size:13px;color:#4F5068;margin-bottom:28px;line-height:1.6;">Your personal wealth manager.<br>Sign in to sync your data to the cloud.</div>
-    <button onclick="signInWithGoogle()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#1C1D27;color:#F0F1F7;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s;" onmouseover="this.style.borderColor='#6366F1'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+    <button onclick="window.signInWithGoogle()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:#1C1D27;color:#F0F1F7;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s;" onmouseover="this.style.borderColor='#6366F1'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
       <svg width="20" height="20" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
       Continue with Google
     </button>
@@ -992,41 +992,50 @@ async function fbDel(col,id){
 }
 
 // ── AUTH ──
-function signInWithGoogle(){
-  const errEl=el('auth-error');if(errEl)errEl.style.display='none';
-  // Use redirect instead of popup - works on all browsers without popup blocker issues
-  auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider())
-    .catch(e=>{if(errEl){errEl.textContent=e.message;errEl.style.display='';}});
-}
+// signInWithGoogle is called directly from button onclick
+// Must be triggered by real user click to avoid popup blocker
+window.signInWithGoogle = function(){
+  const errEl = el('auth-error');
+  const btn = document.querySelector('#auth-screen button');
+  if(errEl) errEl.style.display = 'none';
+  if(btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin-right:8px"></span> Signing in…'; }
 
-function doSignOut(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('email');
+  provider.addScope('profile');
+
+  auth.signInWithPopup(provider)
+    .then(result => {
+      // onAuthStateChanged handles the rest
+      console.log('Signed in:', result.user.email);
+    })
+    .catch(e => {
+      console.error('Sign in error:', e.code, e.message);
+      if(btn) { btn.disabled = false; btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg> Continue with Google'; }
+      // If popup blocked, try redirect as fallback
+      if(e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+        if(errEl){ errEl.textContent = 'Popup was blocked. Trying redirect…'; errEl.style.display = ''; }
+        setTimeout(() => auth.signInWithRedirect(provider), 1000);
+      } else {
+        if(errEl){ errEl.textContent = e.message; errEl.style.display = ''; }
+      }
+    });
+};
+
+window.doSignOut = function(){
   if(!confirm('Sign out? All data stays in the cloud.'))return;
   _unsubs.forEach(u=>u());_unsubs=[];
   auth.signOut();
-}
+};
 
-// ── AUTH STATE ──
-// Handle redirect result first (from signInWithRedirect)
-auth.getRedirectResult().then(result => {
-  // Result handled by onAuthStateChanged below
-}).catch(e => {
-  console.error('Redirect error:', e);
-  const errEl = document.getElementById('auth-error');
-  if(errEl && e.code !== 'auth/no-current-user') {
-    errEl.textContent = e.message;
-    errEl.style.display = '';
-  }
-});
-
+// ── AUTH STATE LISTENER ──
 auth.onAuthStateChanged(user=>{
   const authScr=el('auth-screen'),appEl=el('app');
   if(user){
     currentUser=user;
-    // Hide auth, show app
     authScr.style.display='none';
     authScr.style.pointerEvents='none';
     appEl.style.display='flex';
-    // Update user UI
     const av=el('userAvatar');
     if(av){if(user.photoURL)av.innerHTML=`<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;else av.textContent=(user.displayName||'T').charAt(0);}
     const un=el('userName');if(un)un.textContent=user.displayName||'User';
@@ -1035,7 +1044,6 @@ auth.onAuthStateChanged(user=>{
     const se=el('settingsEmail');if(se)se.textContent=user.email||'—';
     const k=localStorage.getItem('fai_gemini')||'';
     const ki=el('apiKeyInput');if(ki&&k){ki.value=k;const d=el('apiDot');if(d)d.classList.add('ok');}
-    // Start real-time listeners
     startListeners();
     buildMonthTabs();
     gotoPage('dashboard');
