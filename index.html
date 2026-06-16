@@ -326,7 +326,7 @@ nav { -webkit-overflow-scrolling: touch; }
     <div class="sb-logo-mark"><i class="ti ti-chart-dots"></i></div>
     <div>
       <div class="sb-brand">FinanceAI</div>
-      <div class="sb-version">v10 · LKR</div>
+      <div class="sb-version">v11 · LKR</div>
     </div>
   </div>
 
@@ -649,41 +649,52 @@ nav { -webkit-overflow-scrolling: touch; }
     <!-- ── REVIEW TABLE (shared) ── -->
     <div id="parsedSection" style="display:none">
       <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
           <div>
-            <div class="panel-title">Review &amp; categorise <span id="parsedCount" style="font-size:12px;font-weight:400;color:var(--text3)"></span></div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">Change type or category for any row, then save to cloud.</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text)">Review &amp; categorise <span id="parsedCount" style="font-size:12px;font-weight:400;color:var(--text3)"></span></div>
+            <div style="font-size:11.5px;color:var(--text3);margin-top:2px">Edit type or category for any row, then save to cloud.</div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn-ghost" onclick="filterParsed('all')"      id="pf-all"  style="font-size:11px;padding:5px 10px;background:var(--accent3);color:var(--accent2)">All</button>
-            <button class="btn-ghost" onclick="filterParsed('income')"   id="pf-inc"  style="font-size:11px;padding:5px 10px">Income</button>
-            <button class="btn-ghost" onclick="filterParsed('expense')"  id="pf-exp"  style="font-size:11px;padding:5px 10px">Expenses</button>
-            <button class="btn-ghost" onclick="filterParsed('review')"   id="pf-rev"  style="font-size:11px;padding:5px 10px">Needs review</button>
-            <button class="btn-primary" onclick="confirmImport()" style="font-size:12px"><i class="ti ti-cloud-upload"></i> Save all to cloud</button>
-          </div>
+          <button class="btn-primary" onclick="confirmImport()" style="font-size:13px;padding:9px 20px">
+            <i class="ti ti-cloud-upload"></i> Save all to cloud
+          </button>
+        </div>
+
+        <!-- Filter tabs -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+          <button onclick="filterParsed('all')"     id="pf-all" style="padding:5px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent3);color:var(--accent2);font-size:11.5px;cursor:pointer;font-family:inherit">All</button>
+          <button onclick="filterParsed('income')"  id="pf-inc" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:11.5px;cursor:pointer;font-family:inherit">Income</button>
+          <button onclick="filterParsed('expense')" id="pf-exp" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:11.5px;cursor:pointer;font-family:inherit">Expenses</button>
+          <button onclick="filterParsed('review')"  id="pf-rev" style="padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:11.5px;cursor:pointer;font-family:inherit">Needs review</button>
+          <input type="text" id="parsedSearch" oninput="renderParsedRows()" placeholder="Search…" style="padding:5px 10px;font-size:11.5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);margin-left:auto;width:160px">
         </div>
 
         <!-- Bulk actions -->
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="parsedSearch" oninput="renderParsedRows()" placeholder="Search descriptions…" style="font-size:11.5px;padding:5px 10px;width:200px">
-          <select id="bulkCat" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set category…</option></select>
-          <select id="bulkType" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set type…</option><option value="expense">Expense</option><option value="income">Income</option></select>
-          <button class="btn-ghost" onclick="applyBulk()" style="font-size:11px;padding:5px 10px"><i class="ti ti-check"></i> Apply to checked</button>
-          <button class="btn-ghost" onclick="deleteChecked()" style="font-size:11px;padding:5px 10px;color:var(--red)"><i class="ti ti-trash"></i> Delete checked</button>
+          <select id="bulkCat" style="font-size:11.5px;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text)">
+            <option value="">Bulk: set category…</option>
+          </select>
+          <select id="bulkType" style="font-size:11.5px;padding:5px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text)">
+            <option value="">Bulk: set type…</option>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+          <button onclick="applyBulk()" style="font-size:11.5px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:inherit"><i class="ti ti-check"></i> Apply to checked</button>
+          <button onclick="deleteChecked()" style="font-size:11.5px;padding:5px 12px;border-radius:6px;border:1px solid rgba(244,63,94,.3);background:none;color:var(--red);cursor:pointer;font-family:inherit"><i class="ti ti-trash"></i> Delete checked</button>
         </div>
 
-        <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2);margin-top:4px">
-          <table id="reviewTable" style="width:100%;border-collapse:collapse;min-width:800px">
+        <!-- TABLE — simple layout, no fixed widths -->
+        <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
+          <table id="reviewTable" style="width:100%;border-collapse:collapse;min-width:700px">
             <thead>
               <tr style="background:var(--bg3);border-bottom:1px solid var(--border)">
-                <th style="padding:8px 6px;text-align:center;width:32px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer;width:13px;height:13px"></th>
-                <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:95px">DATE</th>
-                <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">DESCRIPTION</th>
-                <th style="padding:8px;text-align:right;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:120px">AMOUNT (LKR)</th>
-                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:105px">TYPE</th>
-                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:160px">CATEGORY</th>
-                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:70px">MONTH</th>
-                <th style="width:34px"></th>
+                <th style="padding:9px 8px;width:32px;text-align:center"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer"></th>
+                <th style="padding:9px 8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;white-space:nowrap">DATE</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">DESCRIPTION</th>
+                <th style="padding:9px 8px;text-align:right;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;white-space:nowrap">AMOUNT (LKR)</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">TYPE</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">CATEGORY</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">MONTH</th>
+                <th style="width:32px"></th>
               </tr>
             </thead>
             <tbody id="parsedBody"></tbody>
@@ -691,7 +702,7 @@ nav { -webkit-overflow-scrolling: touch; }
         </div>
         <div id="parsedTotals" style="display:flex;justify-content:flex-end;gap:20px;padding:10px 4px 0;font-size:12px;flex-wrap:wrap"></div>
       </div>
-    </div>
+    </div></div>
 
   </div>
 
@@ -1668,10 +1679,9 @@ function showStatus(id, html, type) {
 let parsedFilterMode = 'all';
 
 function renderParsedRows() {
-  window._parsedRows = parsedRows; // expose for debugging
-  console.log('renderParsedRows called, rows:', parsedRows.length);
-  if(parsedRows.length > 0) console.log('First row:', JSON.stringify(parsedRows[0]));
+  window._parsedRows = parsedRows;
   const search = (document.getElementById('parsedSearch')?.value || '').toLowerCase();
+  
   let rows = parsedRows.filter(r => {
     if (parsedFilterMode === 'income')  return r.type === 'income';
     if (parsedFilterMode === 'expense') return r.type === 'expense';
@@ -1680,100 +1690,99 @@ function renderParsedRows() {
   });
   if (search) rows = rows.filter(r =>
     (r.desc||'').toLowerCase().includes(search) ||
-    (r.cat||'').toLowerCase().includes(search) ||
-    (r.rawDesc||'').toLowerCase().includes(search)
+    (r.rawDesc||'').toLowerCase().includes(search) ||
+    (r.cat||'').toLowerCase().includes(search)
   );
 
-  const countEl = document.getElementById('parsedCount');
-  if (countEl) countEl.textContent = '(' + parsedRows.length + ' total · ' + rows.length + ' shown)';
+  const count = document.getElementById('parsedCount');
+  if (count) count.textContent = '(' + parsedRows.length + ' total, ' + rows.length + ' shown)';
 
   const body = document.getElementById('parsedBody');
   if (!body) return;
 
-  const allCats = getAllCats();
-
   if (!rows.length) {
-    body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3);font-size:13px">No transactions match the filter</td></tr>';
-    syncAllChk(); refreshPTotals(); return;
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3)">No transactions match the current filter</td></tr>';
+    refreshPTotals(); return;
   }
 
-  body.innerHTML = rows.map(r => {
+  const allCats = getAllCats();
+  const rows_html = [];
+
+  for (let vi = 0; vi < rows.length; vi++) {
+    const r = rows[vi];
     const idx = parsedRows.indexOf(r);
-    if (idx === -1) return '';
+    if (idx === -1) continue;
 
-    const isIncome  = r.type === 'income';
-    const amtColor  = isIncome ? '#10B981' : '#F43F5E';
-    const typeBg    = isIncome ? 'rgba(16,185,129,.12)' : 'rgba(244,63,94,.10)';
-    const typeColor = isIncome ? '#10B981' : '#F43F5E';
-    const rowStyle  = r.checked ? 'background:rgba(99,102,241,.07);' : '';
+    const isInc = r.type === 'income';
+    const amtCol = isInc ? '#10B981' : '#F43F5E';
+    const typeBg  = isInc ? 'rgba(16,185,129,.15)' : 'rgba(244,63,94,.1)';
+    const rowBg   = r.checked ? 'background:rgba(99,102,241,.08);' : '';
 
-    // Format date nicely: YYYY-MM-DD → DD/MM/YYYY
-    const displayDate = toDisplayDate(r.date);
+    // Date: convert YYYY-MM-DD to DD/MM/YY
+    let dateDisp = r.date || '';
+    if (dateDisp.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const p = dateDisp.split('-');
+      dateDisp = p[2] + '/' + p[1] + '/' + p[0].slice(2);
+    }
 
-    // Build category options with correct selected
-    const catOptions = allCats.map(c =>
+    // Description - use desc, fall back to rawDesc
+    const descText = r.desc || r.rawDesc || '—';
+    const subText  = (r.rawDesc && r.rawDesc !== r.desc) ? r.rawDesc : '';
+
+    // Category options
+    const catOpts = allCats.map(c =>
       '<option value="' + c + '"' + (c === r.cat ? ' selected' : '') + '>' + c + '</option>'
-    ).join('') + '<option value="__new__">+ New category…</option>';
+    ).join('') + '<option value="__new__">+ New category</option>';
 
-    // Build month options
-    const monthOptions = MONTHS.map(m =>
-      '<option value="' + m + '"' + (m === r.month ? ' selected' : '') + '>' + m.split(' ')[0].slice(0,3) + ' ' + m.split(' ')[1].slice(2) + '</option>'
+    // Month options  
+    const monOpts = MONTHS.map(m =>
+      '<option value="' + m + '"' + (m === r.month ? ' selected' : '') + '>' + m.slice(0,3) + '</option>'
     ).join('');
 
-    return '<tr style="border-bottom:1px solid var(--border);' + rowStyle + '">'
+    rows_html.push(
+      '<tr style="border-bottom:1px solid var(--border);' + rowBg + '">' +
+      '<td style="padding:7px 8px;text-align:center"><input type="checkbox"' + (r.checked ? ' checked' : '') + ' onchange="parsedRows[' + idx + '].checked=this.checked;syncAllChk()" style="cursor:pointer"></td>' +
+      '<td style="padding:7px 8px;font-size:11px;color:var(--text3);white-space:nowrap">' + dateDisp + '</td>' +
+      '<td style="padding:7px 8px">' +
+        '<div style="font-size:12.5px;font-weight:500;color:var(--text)">' + descText + '</div>' +
+        (subText ? '<div style="font-size:10px;color:var(--text3);margin-top:1px">' + subText.slice(0,55) + '</div>' : '') +
+      '</td>' +
+      '<td style="padding:7px 8px;text-align:right;font-weight:700;color:' + amtCol + ';white-space:nowrap;font-family:var(--font-mono)">' +
+        (isInc ? '+' : '−') + Math.round(r.amount).toLocaleString('en-LK') +
+      '</td>' +
+      '<td style="padding:7px 6px">' +
+        '<select onchange="parsedRows[' + idx + '].type=this.value;renderParsedRows()" ' +
+        'style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border2);background:' + typeBg + ';color:' + amtCol + ';cursor:pointer;font-weight:500;width:90px">' +
+        '<option value="expense"' + (!isInc ? ' selected' : '') + '>Expense</option>' +
+        '<option value="income"' + (isInc ? ' selected' : '') + '>Income</option>' +
+        '</select>' +
+      '</td>' +
+      '<td style="padding:7px 6px">' +
+        '<select onchange="handleCatChange(this,' + idx + ')" ' +
+        'style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;width:140px">' +
+        catOpts +
+        '</select>' +
+      '</td>' +
+      '<td style="padding:7px 6px">' +
+        '<select onchange="parsedRows[' + idx + '].month=this.value" ' +
+        'style="font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;width:52px">' +
+        monOpts +
+        '</select>' +
+      '</td>' +
+      '<td style="padding:7px 6px;text-align:center">' +
+        '<button onclick="parsedRows.splice(' + idx + ',1);renderParsedRows()" ' +
+        'style="background:none;border:1px solid rgba(244,63,94,.3);color:var(--red);padding:3px 6px;border-radius:5px;cursor:pointer;font-size:11px">' +
+        '<i class="ti ti-x"></i></button>' +
+      '</td>' +
+      '</tr>'
+    );
+  }
 
-      // Checkbox
-      + '<td style="padding:7px 6px;text-align:center;vertical-align:middle">'
-      + '<input type="checkbox"' + (r.checked ? ' checked' : '') + ' onchange="parsedRows[' + idx + '].checked=this.checked;syncAllChk()" style="cursor:pointer;width:13px;height:13px"></td>'
-
-      // Date
-      + '<td style="padding:7px 8px;vertical-align:middle;font-size:11.5px;color:var(--text3);white-space:nowrap">' + displayDate + '</td>'
-
-      // Description (main + raw below)
-      + '<td style="padding:7px 8px;vertical-align:middle">'
-      + '<div style="font-size:12.5px;font-weight:500;color:var(--text)" title="' + (r.desc||'').replace(/"/g,'&quot;') + '">' + (r.desc || '—') + '</div>'
-      + (r.rawDesc && r.rawDesc !== r.desc
-          ? '<div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px" title="' + (r.rawDesc||'').replace(/"/g,'&quot;') + '">' + r.rawDesc.slice(0,55) + '</div>'
-          : '')
-      + '</td>'
-
-      // Amount
-      + '<td style="padding:7px 8px;vertical-align:middle;text-align:right;font-weight:700;font-size:13px;color:' + amtColor + ';white-space:nowrap;font-family:var(--font-mono)">'
-      + (isIncome ? '+' : '−') + Math.round(r.amount).toLocaleString('en-LK')
-      + '</td>'
-
-      // Type dropdown
-      + '<td style="padding:7px 6px;vertical-align:middle">'
-      + '<select onchange="parsedRows[' + idx + '].type=this.value;renderParsedRows()" style="width:100%;font-size:11.5px;padding:4px 5px;border-radius:6px;border:1px solid var(--border2);background:' + typeBg + ';color:' + typeColor + ';cursor:pointer;font-weight:500">'
-      + '<option value="expense"' + (!isIncome ? ' selected' : '') + '>Expense</option>'
-      + '<option value="income"' + (isIncome ? ' selected' : '') + '>Income</option>'
-      + '</select></td>'
-
-      // Category dropdown
-      + '<td style="padding:7px 6px;vertical-align:middle">'
-      + '<select onchange="handleCatChange(this,' + idx + ')" style="width:100%;font-size:11.5px;padding:4px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer">'
-      + catOptions
-      + '</select></td>'
-
-      // Month dropdown
-      + '<td style="padding:7px 6px;vertical-align:middle">'
-      + '<select onchange="parsedRows[' + idx + '].month=this.value" style="width:100%;font-size:11px;padding:4px 4px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer">'
-      + monthOptions
-      + '</select></td>'
-
-      // Delete
-      + '<td style="padding:7px 6px;vertical-align:middle;text-align:center">'
-      + '<button onclick="parsedRows.splice(' + idx + ',1);renderParsedRows()" style="background:none;border:1px solid rgba(244,63,94,.3);color:var(--red);padding:3px 6px;border-radius:5px;cursor:pointer;font-size:11px;display:flex;align-items:center">'
-      + '<i class="ti ti-x"></i></button></td>'
-
-      + '</tr>';
-  }).join('');
-
+  body.innerHTML = rows_html.join('');
   syncAllChk();
   refreshPTotals();
 }
 
-// Handle category change — intercept "Add new category"
 window.handleCatChange = function(sel, idx) {
   if (sel.value === '__new__') {
     const newCat = prompt('Enter new category name:');
