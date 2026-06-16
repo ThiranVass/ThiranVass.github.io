@@ -326,7 +326,7 @@ nav { -webkit-overflow-scrolling: touch; }
     <div class="sb-logo-mark"><i class="ti ti-chart-dots"></i></div>
     <div>
       <div class="sb-brand">FinanceAI</div>
-      <div class="sb-version">v8 · DEBUG · LKR</div>
+      <div class="sb-version">v9 · FINAL · LKR</div>
     </div>
   </div>
 
@@ -673,27 +673,17 @@ nav { -webkit-overflow-scrolling: touch; }
         </div>
 
         <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2);margin-top:4px">
-          <table style="width:100%;border-collapse:collapse;table-layout:fixed">
-            <colgroup>
-              <col style="width:36px">
-              <col style="width:90px">
-              <col style="width:auto">
-              <col style="width:130px">
-              <col style="width:110px">
-              <col style="width:155px">
-              <col style="width:72px">
-              <col style="width:36px">
-            </colgroup>
+          <table id="reviewTable" style="width:100%;border-collapse:collapse;min-width:800px">
             <thead>
               <tr style="background:var(--bg3);border-bottom:1px solid var(--border)">
-                <th style="padding:8px 6px;text-align:center"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer;width:13px;height:13px"></th>
-                <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">DATE</th>
+                <th style="padding:8px 6px;text-align:center;width:32px"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer;width:13px;height:13px"></th>
+                <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:95px">DATE</th>
                 <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">DESCRIPTION</th>
-                <th style="padding:8px;text-align:right;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">AMOUNT (LKR)</th>
-                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">TYPE</th>
-                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">CATEGORY</th>
-                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">MONTH</th>
-                <th></th>
+                <th style="padding:8px;text-align:right;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:120px">AMOUNT (LKR)</th>
+                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:105px">TYPE</th>
+                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:160px">CATEGORY</th>
+                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em;width:70px">MONTH</th>
+                <th style="width:34px"></th>
               </tr>
             </thead>
             <tbody id="parsedBody"></tbody>
@@ -1201,14 +1191,14 @@ function renderDashboard(){
   // Category donut — interconnects with transactions filter
   const catTotals={};CATS.forEach(c=>catTotals[c]=0);
   data.filter(t=>t.type==='expense').forEach(t=>{if(catTotals[t.cat]!==undefined)catTotals[t.cat]+=t.amount;});
-  const cL=CATS.filter(c=>catTotals[c]>0),cV=cL.map(c=>catTotals[c]),cC=cL.map(c=>CAT_COLORS[c]);
+  const cL=CATS.filter(c=>catTotals[c]>0),cV=cL.map(c=>catTotals[c]),cC=cL.map(c=>getCatColor(c));
   el('catPeriodLabel').textContent=label;
   mkChart('catChart',{type:'doughnut',data:{labels:cL,datasets:[{data:cV,backgroundColor:cC,borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
     tooltip:{callbacks:{label:d=>' LKR '+fmt(d.raw)+' ('+Math.round(d.raw/(exp||1)*100)+'%)'}}},
     cutout:'70%',onClick:(e,els)=>{if(els[0]){const cat=cL[els[0].index];gotoPage('transactions');setTimeout(()=>{const fc=el('fCat');if(fc){fc.value=cat;renderTxnPage();}},100);}}}});
   const cl=el('catLegend');
-  if(cl)cl.innerHTML=cL.map(c=>`<span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2);cursor:pointer" onclick="gotoPage('transactions');setTimeout(()=>{const f=document.getElementById('fCat');if(f){f.value='${c}';renderTxnPage();}},100)"><span style="width:7px;height:7px;border-radius:2px;background:${CAT_COLORS[c]};flex-shrink:0"></span>${c}</span>`).join('');
+  if(cl)cl.innerHTML=cL.map(c=>`<span style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2);cursor:pointer" onclick="gotoPage('transactions');setTimeout(()=>{const f=document.getElementById('fCat');if(f){f.value='${c}';renderTxnPage();}},100)"><span style="width:7px;height:7px;border-radius:2px;background:${getCatColor(c)};flex-shrink:0"></span>${c}</span>`).join('');
 
   // Monthly bar — all 12 months from all transactions
   const mL=MONTHS.map(m=>m.split(' ')[0].slice(0,3));
@@ -1225,7 +1215,7 @@ function renderDashboard(){
   if(bb)bb.innerHTML=CATS.map(c=>{
     const sp=catTotals[c]||0,b=DB.budgets[c]||1;
     const p=Math.min(Math.round(sp/b*100),100);
-    const ov=sp>b,col=ov?'var(--red)':p>70?'var(--amber)':CAT_COLORS[c];
+    const ov=sp>b,col=ov?'var(--red)':p>70?'var(--amber)':getCatColor(c);
     return `<div class="pbar-row" onclick="gotoPage('transactions');setTimeout(()=>{const f=document.getElementById('fCat');if(f){f.value='${c}';renderTxnPage();}},100)" style="cursor:pointer">
       <span class="pbar-icon"><i class="ti ${CAT_ICONS[c]}"></i></span>
       <span class="pbar-name">${c}</span>
@@ -1640,10 +1630,7 @@ function processCSVFile(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      console.log('CSV loaded, length:', e.target.result.length);
-      console.log('First 200 chars:', e.target.result.substring(0,200));
       const rows = parseCSVText(e.target.result, bank, month, minAmt);
-      console.log('Parsed rows:', rows.length, rows.slice(0,2));
       if (!rows.length) {
         showStatus('csvStatus', 'No transactions found. Check the bank format selector.', 'err');
         return;
@@ -1740,8 +1727,8 @@ function renderParsedRows() {
       + '<td style="padding:7px 8px;vertical-align:middle;font-size:11.5px;color:var(--text3);white-space:nowrap">' + displayDate + '</td>'
 
       // Description (main + raw below)
-      + '<td style="padding:7px 8px;vertical-align:middle;overflow:hidden">'
-      + '<div style="font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + (r.desc||'').replace(/"/g,'&quot;') + '">' + (r.desc || '—') + '</div>'
+      + '<td style="padding:7px 8px;vertical-align:middle">'
+      + '<div style="font-size:12.5px;font-weight:500;color:var(--text)" title="' + (r.desc||'').replace(/"/g,'&quot;') + '">' + (r.desc || '—') + '</div>'
       + (r.rawDesc && r.rawDesc !== r.desc
           ? '<div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px" title="' + (r.rawDesc||'').replace(/"/g,'&quot;') + '">' + r.rawDesc.slice(0,55) + '</div>'
           : '')
@@ -2120,7 +2107,7 @@ window.deleteInv=async function(id){if(confirm('Remove this investment?')){await
 function renderBudgets(){
   const bf=el('budgetForm');if(!bf)return;
   bf.innerHTML=CATS.map(c=>`<div class="form-group">
-    <label class="form-label"><i class="ti ${CAT_ICONS[c]}" style="font-size:13px;color:${CAT_COLORS[c]};margin-right:4px"></i>${c}</label>
+    <label class="form-label"><i class="ti ${CAT_ICONS[c]}" style="font-size:13px;color:${getCatColor(c)};margin-right:4px"></i>${c}</label>
     <input type="number" id="bg_${c.replace(/[^a-z]/gi,'_')}" value="${DB.budgets[c]||0}" placeholder="0">
   </div>`).join('');
 }
