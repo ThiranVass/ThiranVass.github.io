@@ -326,7 +326,7 @@ nav { -webkit-overflow-scrolling: touch; }
     <div class="sb-logo-mark"><i class="ti ti-chart-dots"></i></div>
     <div>
       <div class="sb-brand">FinanceAI</div>
-      <div class="sb-version">v6 · CSV FIXED · LKR</div>
+      <div class="sb-version">v7 · FIXED · LKR</div>
     </div>
   </div>
 
@@ -1549,12 +1549,18 @@ function detectMonth(isoDate) {
 
 function cleanDesc(raw) {
   if (!raw) return '';
-  return raw
-    .replace(/^PURCHASE\s+/i, '')
-    .replace(/\s*\/\s*[A-Z0-9O]{8,}[^/]*$/i, '')
-    .replace(/\s*\/\s*-\s*$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Remove PURCHASE prefix
+  let s = raw.replace(/^PURCHASE\s+/i, '').replace(/^WITHDRAWAL\s+/i, '');
+  // Split on " / " and filter out reference numbers (pure alphanumeric 8+ chars or pure digits 8+)
+  const parts = s.split(/\s*\/\s*/);
+  const cleaned = parts.filter(p => {
+    const t = p.trim();
+    if (!t || t === '-') return false;
+    if (/^[A-Z0-9]{8,}$/i.test(t)) return false;  // pure ref number like O600039779142
+    if (/^\d{8,}$/.test(t)) return false;            // pure digits like 029804859319
+    return true;
+  });
+  return (cleaned.join(' / ') || parts[0] || '').trim();
 }
 
 function parseCSVText(text, bankFmt, defaultMonth, minAmt) {
@@ -2237,7 +2243,7 @@ if(importBtn)importBtn.onclick=()=>gotoPage('import');
 // Init — show auth screen, hide app
 el('app').style.display='none';
 buildMonthTabs();
-console.log('FinanceAI v6 CSV-FIXED loaded — waiting for Firebase auth...');
+console.log('FinanceAI v7 FIXED loaded — waiting for Firebase auth...');
 </script>
 </body>
 </html>
