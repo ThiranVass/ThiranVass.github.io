@@ -541,52 +541,154 @@ nav { -webkit-overflow-scrolling: touch; }
 
   <!-- ════ IMPORT ════ -->
   <div class="page" id="pg-import">
-    <div class="panel">
-      <div class="panel-head"><span class="panel-title"><i class="ti ti-sparkles" style="color:var(--accent2);margin-right:6px"></i>AI statement parser</span></div>
-      <div style="background:var(--accent4);border:1px solid rgba(99,102,241,.15);border-radius:var(--r);padding:11px 14px;font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">
-        Paste any bank statement text below — CSV export, copied PDF rows, or any format. Gemini AI reads your statement, identifies every transaction, and auto-categorises it against your 12 spending categories.
-      </div>
-      <div class="form-row" style="grid-template-columns:1fr 1fr 1fr">
-        <div class="form-group"><label class="form-label">Month</label>
-          <select id="impMonth">
-            <option>January 2026</option><option>February 2026</option><option>March 2026</option><option>April 2026</option><option>May 2026</option><option selected>June 2026</option><option>July 2026</option><option>August 2026</option><option>September 2026</option><option>October 2026</option><option>November 2026</option><option>December 2026</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Currency</label>
-          <select id="impCurrency"><option>LKR</option><option>USD</option><option>EUR</option><option>GBP</option></select>
-        </div>
-      </div>
-      <div class="form-group" style="margin-bottom:14px">
-        <label class="form-label">Bank statement text</label>
-        <textarea id="stmtText" placeholder="01/06  KEELLS SUPERMARKET         -4,500.00&#10;02/06  SALARY CREDIT             +150,000.00&#10;03/06  DIALOG AXIATA BILL          -2,800.00&#10;04/06  UBER EATS                   -1,200.00&#10;05/06  LAUGFS FUEL STATION         -3,500.00"></textarea>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <button class="btn-primary" id="parseBtn" onclick="parseStatement()"><i class="ti ti-sparkles"></i> Parse with Gemini</button>
-        <div id="parseToast"></div>
-      </div>
+
+    <!-- METHOD TABS -->
+    <div style="display:flex;gap:8px">
+      <button id="itab-csv" onclick="switchITab('csv')" class="btn-primary" style="font-size:12px"><i class="ti ti-file-spreadsheet"></i> Upload bank CSV</button>
+      <button id="itab-ai"  onclick="switchITab('ai')"  class="btn-ghost"    style="font-size:12px"><i class="ti ti-sparkles"></i> AI text paste</button>
+      <button id="itab-man" onclick="switchITab('man')" class="btn-ghost"    style="font-size:12px"><i class="ti ti-keyboard"></i> Manual entry</button>
     </div>
-    <div id="parsedSection" style="display:none">
+
+    <!-- ── CSV UPLOAD ── -->
+    <div id="imp-csv">
       <div class="panel">
         <div class="panel-head">
-          <span class="panel-title">Review &amp; confirm</span>
-          <button class="btn-primary" onclick="confirmImport()"><i class="ti ti-check"></i> Save to ledger</button>
+          <span class="panel-title"><i class="ti ti-file-spreadsheet" style="color:var(--green);margin-right:6px"></i>Bank CSV import</span>
+          <span class="panel-sub">Commercial Bank, HNB, Sampath, BOC, NDB</span>
         </div>
-        <div class="parsed-wrap">
-          <table class="parsed-table">
-            <thead><tr>
-              <th style="width:13%">Date</th>
-              <th style="width:34%">Description</th>
-              <th style="width:13%">Amount</th>
-              <th style="width:14%">Type</th>
-              <th style="width:20%">Category</th>
-              <th style="width:6%"></th>
-            </tr></thead>
+        <div style="background:var(--green2);border:1px solid rgba(16,185,129,.2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+          <strong style="color:var(--green)">How to get your CSV:</strong> ComBank Online → Accounts → Transaction History → choose date range → Download/Export as CSV. Then drag it below.
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:14px">
+          <div class="form-group">
+            <label class="form-label">Default month (auto-detected from dates)</label>
+            <select id="csvMonth"><option>January 2026</option><option>February 2026</option><option>March 2026</option><option>April 2026</option><option>May 2026</option><option selected>June 2026</option><option>July 2026</option><option>August 2026</option><option>September 2026</option><option>October 2026</option><option>November 2026</option><option>December 2026</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bank format</label>
+            <select id="csvBank">
+              <option value="combank">Commercial Bank of Ceylon</option>
+              <option value="hnb">HNB</option>
+              <option value="sampath">Sampath Bank</option>
+              <option value="boc">Bank of Ceylon</option>
+              <option value="generic">Generic (Date, Desc, Debit, Credit)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Skip transactions below (LKR)</label>
+            <input type="number" id="csvMin" value="0" placeholder="0" style="font-size:12px">
+          </div>
+        </div>
+
+        <!-- DROP ZONE -->
+        <div id="csvDrop"
+          onclick="document.getElementById('csvFile').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='rgba(99,102,241,.12)'"
+          ondragleave="this.style.borderColor='rgba(99,102,241,.25)';this.style.background='var(--accent4)'"
+          ondrop="event.preventDefault();this.style.borderColor='rgba(99,102,241,.25)';this.style.background='var(--accent4)';handleCSVDrop(event)"
+          style="border:2.5px dashed rgba(99,102,241,.25);border-radius:var(--r2);padding:44px 20px;text-align:center;cursor:pointer;background:var(--accent4);transition:all .2s;margin-bottom:12px">
+          <i class="ti ti-cloud-upload" style="font-size:40px;color:var(--accent2);display:block;margin-bottom:10px"></i>
+          <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:6px">Drag &amp; drop your CSV file here</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">or click to browse your files</div>
+          <div style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;padding:8px 18px;border-radius:var(--r);font-size:12.5px;font-weight:500">
+            <i class="ti ti-folder-open"></i> Choose CSV file
+          </div>
+          <input type="file" id="csvFile" accept=".csv,.txt" style="display:none" onchange="handleCSVFile(this)">
+        </div>
+        <div id="csvStatus"></div>
+      </div>
+    </div>
+
+    <!-- ── AI TEXT ── -->
+    <div id="imp-ai" style="display:none">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title"><i class="ti ti-sparkles" style="color:var(--accent2);margin-right:6px"></i>AI text parser</span><span class="panel-sub">Requires Gemini API key in Settings</span></div>
+        <div style="background:var(--accent4);border:1px solid rgba(99,102,241,.15);border-radius:var(--r);padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+          Paste any statement text — copied from PDF, SMS, email. Gemini AI will read it and auto-categorise everything.
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr">
+          <div class="form-group"><label class="form-label">Month</label>
+            <select id="impMonth"><option>January 2026</option><option>February 2026</option><option>March 2026</option><option>April 2026</option><option>May 2026</option><option selected>June 2026</option><option>July 2026</option><option>August 2026</option><option>September 2026</option><option>October 2026</option><option>November 2026</option><option>December 2026</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Currency</label><select id="impCurrency"><option>LKR</option><option>USD</option><option>EUR</option><option>GBP</option></select></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label class="form-label">Paste statement text</label>
+          <textarea id="stmtText" style="min-height:130px" placeholder="Paste copied text from your bank statement PDF or email here..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn-primary" id="parseBtn" onclick="parseStatement()"><i class="ti ti-sparkles"></i> Parse with Gemini</button>
+          <div id="parseToast"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MANUAL ── -->
+    <div id="imp-man" style="display:none">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title"><i class="ti ti-keyboard" style="color:var(--amber);margin-right:6px"></i>Add single transaction</span></div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" id="mt-date"></div>
+          <div class="form-group"><label class="form-label">Month</label><select id="mt-month"><option>January 2026</option><option>February 2026</option><option>March 2026</option><option>April 2026</option><option>May 2026</option><option selected>June 2026</option><option>July 2026</option><option>August 2026</option><option>September 2026</option><option>October 2026</option><option>November 2026</option><option>December 2026</option></select></div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Description</label><input type="text" id="mt-desc" placeholder="e.g. Keells Supermarket"></div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr">
+          <div class="form-group"><label class="form-label">Amount (LKR)</label><input type="number" id="mt-amount" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">Type</label><select id="mt-type"><option value="expense">Expense</option><option value="income">Income</option></select></div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px"><label class="form-label">Category</label>
+          <select id="mt-cat"><option>Bills</option><option>Subscriptions</option><option>Entertainment</option><option>Food &amp; Drink</option><option>Groceries</option><option>Health &amp; Wellbeing</option><option>Other</option><option>Shopping</option><option>Fuel</option><option>Travel</option><option>Love life</option><option>Gifts</option></select>
+        </div>
+        <button class="btn-primary" onclick="saveManualTxn()"><i class="ti ti-check"></i> Add transaction</button>
+      </div>
+    </div>
+
+    <!-- ── REVIEW TABLE (shared) ── -->
+    <div id="parsedSection" style="display:none">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="panel-title">Review &amp; categorise <span id="parsedCount" style="font-size:12px;font-weight:400;color:var(--text3)"></span></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">Change type or category for any row, then save to cloud.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn-ghost" onclick="filterParsed('all')"      id="pf-all"  style="font-size:11px;padding:5px 10px;background:var(--accent3);color:var(--accent2)">All</button>
+            <button class="btn-ghost" onclick="filterParsed('income')"   id="pf-inc"  style="font-size:11px;padding:5px 10px">Income</button>
+            <button class="btn-ghost" onclick="filterParsed('expense')"  id="pf-exp"  style="font-size:11px;padding:5px 10px">Expenses</button>
+            <button class="btn-ghost" onclick="filterParsed('review')"   id="pf-rev"  style="font-size:11px;padding:5px 10px">Needs review</button>
+            <button class="btn-primary" onclick="confirmImport()" style="font-size:12px"><i class="ti ti-cloud-upload"></i> Save all to cloud</button>
+          </div>
+        </div>
+
+        <!-- Bulk actions -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="parsedSearch" oninput="renderParsedRows()" placeholder="Search descriptions…" style="font-size:11.5px;padding:5px 10px;width:200px">
+          <select id="bulkCat" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set category…</option><option>Bills</option><option>Subscriptions</option><option>Entertainment</option><option>Food &amp; Drink</option><option>Groceries</option><option>Health &amp; Wellbeing</option><option>Other</option><option>Shopping</option><option>Fuel</option><option>Travel</option><option>Love life</option><option>Gifts</option></select>
+          <select id="bulkType" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set type…</option><option value="expense">Expense</option><option value="income">Income</option></select>
+          <button class="btn-ghost" onclick="applyBulk()" style="font-size:11px;padding:5px 10px"><i class="ti ti-check"></i> Apply to checked</button>
+          <button class="btn-ghost" onclick="deleteChecked()" style="font-size:11px;padding:5px 10px;color:var(--red)"><i class="ti ti-trash"></i> Delete checked</button>
+        </div>
+
+        <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2)">
+          <table style="width:100%;border-collapse:collapse;min-width:700px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th style="padding:9px 8px;text-align:center;width:36px;border-bottom:1px solid var(--border)"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer"></th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">DATE</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">DESCRIPTION</th>
+                <th style="padding:9px 8px;text-align:right;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">AMOUNT</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">TYPE</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">CATEGORY</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">MONTH</th>
+                <th style="width:36px;border-bottom:1px solid var(--border)"></th>
+              </tr>
+            </thead>
             <tbody id="parsedBody"></tbody>
           </table>
         </div>
-        <div class="parsed-totals" id="parsedTotals"></div>
+        <div id="parsedTotals" style="display:flex;justify-content:flex-end;gap:20px;padding:10px 4px 0;font-size:12px;flex-wrap:wrap"></div>
       </div>
     </div>
+
   </div>
 
   <!-- ════ CREDIT CARDS ════ -->
@@ -1254,375 +1356,383 @@ window.saveManualTxn=async function(){
 // ══════════════════════════════════════════════════════
 //  AI IMPORT — Parses statement, saves to cloud
 // ══════════════════════════════════════════════════════
-
 // ══════════════════════════════════════════════════════
-//  IMPORT SYSTEM — CSV + AI + Manual
+//  IMPORT TAB SWITCHING
 // ══════════════════════════════════════════════════════
-
-// Import tab switcher
-window.switchImportTab = function(tab) {
-  document.getElementById('import-csv').style.display = tab==='csv' ? '' : 'none';
-  document.getElementById('import-ai').style.display = tab==='ai' ? '' : 'none';
-  document.getElementById('import-manual').style.display = tab==='manual' ? '' : 'none';
-  ['csv','ai','manual'].forEach(t => {
-    const btn = document.getElementById('tab-'+t);
-    if(btn) {
-      btn.className = t===tab ? 'btn-primary' : 'btn-ghost';
-    }
+window.switchITab = function(tab) {
+  ['csv','ai','man'].forEach(t => {
+    const panel = document.getElementById('imp-'+t);
+    const btn   = document.getElementById('itab-'+t);
+    if (!panel || !btn) return;
+    panel.style.display = t === tab ? '' : 'none';
+    btn.className = t === tab ? 'btn-primary' : 'btn-ghost';
+    btn.style.fontSize = '12px';
   });
 };
 
-// ── CSV IMPORT ──
-window.handleCSVDrop = function(event) {
-  event.preventDefault();
-  document.getElementById('csvDropZone').style.borderColor = 'rgba(99,102,241,.3)';
-  const file = event.dataTransfer.files[0];
-  if(file) processCSVFile(file);
-};
+// ══════════════════════════════════════════════════════
+//  CSV PARSER — Commercial Bank of Ceylon + others
+// ══════════════════════════════════════════════════════
 
+// Smart categoriser for Sri Lankan merchants
+function autoCategorise(desc) {
+  const d = (desc || '').toLowerCase();
+
+  // ── INCOME signals ──
+  if (/salary|tomorrow advertising|june salary|advance income tx credit|wepay.*ef |vmt credit|pickme.*homies|061100|bene\/org|payment.*miss|interest\b/.test(d) && !/purchase/.test(d)) {
+    return { type: 'income', cat: 'Other' };
+  }
+
+  // ── GROCERIES ──
+  if (/keells|cargills|arpico|spar\b|meegamu|village bakery|perera store|brescia mart|c s l holdings|foodcity|food city|supermarket|grocers|mart\b/.test(d))
+    return { type: 'expense', cat: 'Groceries' };
+
+  // ── FOOD & DRINK ──
+  if (/uber eats|barista|prego|dinemore|urban smokehouse|softlogic resta|sun food|restaurant|koko\b|simply strawberries|mr\.deen|food studio|negombo hotel.*food|cafe|bakery|mikayla cove/.test(d))
+    return { type: 'expense', cat: 'Food & Drink' };
+
+  // ── SUBSCRIPTIONS / DIGITAL ──
+  if (/apple\.com|dialog axiata|netflix|spotify|adobe|youtube|amazon prime|music pay/.test(d))
+    return { type: 'expense', cat: 'Subscriptions' };
+
+  // ── TRAVEL / TRANSPORT ──
+  if (/pickme|uber\b|airline|hotel\b|topaz|negombo hotel|night stay|woodnest|mikayla|airbnb|makka|taxi|tuk|bus|train/.test(d))
+    return { type: 'expense', cat: 'Travel' };
+
+  // ── FUEL ──
+  if (/fuel|laugfs|marine fuel|filling station|petrol|ceypetco|ioc\b|lanka filling/.test(d))
+    return { type: 'expense', cat: 'Fuel' };
+
+  // ── HEALTH ──
+  if (/pharmacy|medical|hospital|clinic|doctor|lakshi|osu sala|channelling|lab\b|diagnostic/.test(d))
+    return { type: 'expense', cat: 'Health & Wellbeing' };
+
+  // ── SHOPPING / RETAIL ──
+  if (/salon|wine store|bombuwala|softlogic\b|fashion|clothing|shoe|brands|cotton|splash|odel|h&m|zara/.test(d))
+    return { type: 'expense', cat: 'Shopping' };
+
+  // ── BILLS / UTILITIES ──
+  if (/dialog\b|slt\b|mobitel|hutch|electricity|ceb\b|water board|leco\b|insurance|traffic division/.test(d))
+    return { type: 'expense', cat: 'Bills' };
+
+  // ── ENTERTAINMENT ──
+  if (/cinema|pvr|film|concert|event|game|bowling|escape room|recreation/.test(d))
+    return { type: 'expense', cat: 'Entertainment' };
+
+  // ── LOVE LIFE / GIFTS ──
+  if (/piumika|rashmi piu|toy store koko|flower|florist|gift/.test(d))
+    return { type: 'expense', cat: 'Love life' };
+
+  // ── BANK FEES / CHARGES ──
+  if (/ib ceft chgs|debit interest|advance income tax|stamp duty|service charge|sms alert|annual fee/.test(d))
+    return { type: 'expense', cat: 'Bills' };
+
+  // ── ATM / WITHDRAWALS ──
+  if (/withdrawal|atm\b|cash/.test(d))
+    return { type: 'expense', cat: 'Other' };
+
+  // Default: expenses are "Other", credits reviewed
+  return { type: 'expense', cat: 'Other' };
+}
+
+// Parse a CSV row respecting quoted fields
+function parseCSVLine(line) {
+  const cols = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+function isDateStr(s) {
+  return s && /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s.trim());
+}
+
+function toISO(dateStr) {
+  const p = dateStr.trim().split(/[\/\-]/);
+  if (p.length !== 3) return dateStr;
+  const day = p[0].padStart(2,'0'), mon = p[1].padStart(2,'0');
+  const yr  = p[2].length === 2 ? '20'+p[2] : p[2];
+  return `${yr}-${mon}-${day}`;
+}
+
+function toDisplayDate(iso) {
+  if (!iso) return '—';
+  const p = iso.split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso;
+}
+
+function detectMonth(dateISO) {
+  if (!dateISO) return null;
+  const d = new Date(dateISO);
+  if (isNaN(d)) return null;
+  return MONTHS[d.getMonth()] || null;
+}
+
+function cleanDesc(raw) {
+  return raw
+    .replace(/^PURCHASE\s+/i, '')
+    .replace(/\s*\/\s*[A-Z0-9]{8,}\s*\/.*$/i, '')
+    .replace(/\s*\/\s*-\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseCSVText(text, bankFmt, defaultMonth, minAmt) {
+  const rows = [];
+  const lines = text.split('\n');
+  let dataStarted = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const cols = parseCSVLine(line);
+
+    // ComBank format detection: look for Transaction Date header
+    if (!dataStarted) {
+      if (line.includes('Transaction Date') || line.includes('transaction date')) {
+        dataStarted = true; continue;
+      }
+      // Also auto-start if first column empty and second looks like a date
+      if (cols.length >= 8 && isDateStr(cols[1])) dataStarted = true;
+      if (!dataStarted) continue;
+    }
+
+    // Stop at footer rows
+    if (/generated at|commercial bank of ceylon|all rights reserved/i.test(line)) break;
+
+    if (bankFmt === 'combank' || bankFmt === 'generic') {
+      // Format: ,Date,,Description,,Currency,Debit,Credit,Balance,...
+      const date    = cols[1] || '';
+      const rawDesc = cols[3] || '';
+      const debitS  = (cols[6] || '').replace(/,/g, '');
+      const creditS = (cols[7] || '').replace(/,/g, '');
+
+      if (!isDateStr(date) || !rawDesc) continue;
+      if (/generated at/i.test(rawDesc)) break;
+
+      const debit  = parseFloat(debitS)  || 0;
+      const credit = parseFloat(creditS) || 0;
+      if (debit === 0 && credit === 0) continue;
+
+      const amount = credit > 0 ? credit : debit;
+      if (amount < minAmt) continue;
+
+      const iso   = toISO(date);
+      const desc  = cleanDesc(rawDesc);
+      const guess = autoCategorise(rawDesc);
+      const type  = credit > 0 ? 'income' : 'expense';
+      const month = detectMonth(iso) || defaultMonth;
+
+      rows.push({ id: uid(), date: iso, desc, rawDesc, amount, type, cat: guess.cat, month, checked: false });
+
+    } else if (bankFmt === 'hnb' || bankFmt === 'sampath' || bankFmt === 'boc') {
+      // Generic: Date, Description, Debit, Credit (columns 0-3)
+      const date    = cols[0] || '';
+      const rawDesc = cols[1] || '';
+      const debitS  = (cols[2] || '').replace(/,/g, '');
+      const creditS = (cols[3] || '').replace(/,/g, '');
+
+      if (!isDateStr(date) || !rawDesc) continue;
+
+      const debit  = parseFloat(debitS)  || 0;
+      const credit = parseFloat(creditS) || 0;
+      if (debit === 0 && credit === 0) continue;
+      const amount = credit > 0 ? credit : debit;
+      if (amount < minAmt) continue;
+
+      const iso   = toISO(date);
+      const desc  = cleanDesc(rawDesc);
+      const guess = autoCategorise(rawDesc);
+      const type  = credit > 0 ? 'income' : 'expense';
+      const month = detectMonth(iso) || defaultMonth;
+
+      rows.push({ id: uid(), date: iso, desc, rawDesc, amount, type, cat: guess.cat, month, checked: false });
+    }
+  }
+  return rows;
+}
+
+// ── FILE HANDLING ──
+window.handleCSVDrop = function(e) {
+  const file = e.dataTransfer.files[0];
+  if (file) processCSVFile(file);
+};
 window.handleCSVFile = function(input) {
   const file = input.files[0];
-  if(file) processCSVFile(file);
+  if (file) processCSVFile(file);
 };
 
 function processCSVFile(file) {
+  const month  = document.getElementById('csvMonth').value;
+  const bank   = document.getElementById('csvBank').value;
+  const minAmt = parseFloat(document.getElementById('csvMin').value) || 0;
+
+  showStatus('csvStatus', `Reading <strong>${file.name}</strong>…`, 'info');
+
   const reader = new FileReader();
-  const month = document.getElementById('csvMonth').value;
-  const format = document.getElementById('csvBankFormat').value;
-  const minAmt = parseFloat(document.getElementById('csvMinAmount').value) || 0;
-  
-  showInlineToast('csvToast', 'Reading file: ' + file.name + '…', 'info');
-  
   reader.onload = function(e) {
-    const text = e.target.result;
     try {
-      const transactions = parseCSV(text, format, month, minAmt);
-      if(transactions.length === 0) {
-        showInlineToast('csvToast', 'No transactions found. Make sure this is a valid bank statement CSV.', 'err');
+      const rows = parseCSVText(e.target.result, bank, month, minAmt);
+      if (!rows.length) {
+        showStatus('csvStatus', 'No transactions found. Check the bank format selector.', 'err');
         return;
       }
-      parsedRows = transactions;
-      renderParsedRows();
+      parsedRows = rows;
+      parsedFilterMode = 'all';
       document.getElementById('parsedSection').style.display = '';
-      showInlineToast('csvToast', '✓ Found ' + transactions.length + ' transactions — review and save below', 'ok');
-      // Scroll to review section
-      setTimeout(() => document.getElementById('parsedSection').scrollIntoView({behavior:'smooth'}), 200);
-    } catch(err) {
-      showInlineToast('csvToast', 'Error reading file: ' + err.message, 'err');
+      renderParsedRows();
+      showStatus('csvStatus',
+        `✓ Found <strong>${rows.length} transactions</strong> — review and categorise below, then click Save to cloud`,
+        'ok');
+      setTimeout(() => document.getElementById('parsedSection').scrollIntoView({ behavior: 'smooth' }), 200);
+    } catch (err) {
+      showStatus('csvStatus', 'Error: ' + err.message, 'err');
     }
   };
   reader.readAsText(file);
 }
 
-// ── SMART CATEGORISER ──
-function smartCategorise(desc) {
-  const d = desc.toLowerCase();
-  
-  // Income signals
-  if(d.includes('salary') || d.includes('tomorrow advertising') || d.includes('june salary') || 
-     d.includes('advance income tx credit') || d.includes('interest') || d.includes('wepay') ||
-     (d.includes('payment') && !d.includes('purchase'))) {
-    return {type:'income', cat:'Other'};
-  }
-  
-  // Grocery stores
-  if(d.match(/keells|cargills|arpico|spar|meegamu|village bakery|perera stores|brescia mart|c s l holdings/)) {
-    return {type:'expense', cat:'Groceries'};
-  }
-  // Food & drink / restaurants
-  if(d.match(/uber eats|barista|food|prego|dinemore|softlogic resta|sun food|restaurant|koko|simply strawberries|mr\.deen/)) {
-    return {type:'expense', cat:'Food & Drink'};
-  }
-  // Subscriptions / digital
-  if(d.match(/apple\.com|dialog axiata|netflix|spotify|music pay/)) {
-    return {type:'expense', cat:'Subscriptions'};
-  }
-  // Travel / transport
-  if(d.match(/pickme|uber|airline|hotel|topaz|negombo hotel|night stay|mikayla cove|woodnest/)) {
-    return {type:'expense', cat:'Travel'};
-  }
-  // Fuel
-  if(d.match(/fuel|laugfs|marine fuel|filling|petrol/)) {
-    return {type:'expense', cat:'Fuel'};
-  }
-  // Health
-  if(d.match(/pharmacy|medical|hospital|clinic|lakshi pharmacy/)) {
-    return {type:'expense', cat:'Health & Wellbeing'};
-  }
-  // Shopping / clothing
-  if(d.match(/salon|wine|bombuwala|softlogic/)) {
-    return {type:'expense', cat:'Shopping'};
-  }
-  // Bills / utilities
-  if(d.match(/bill|electricity|water|slt|lanka bell|ceb/)) {
-    return {type:'expense', cat:'Bills'};
-  }
-  // Love life
-  if(d.match(/flower|piumika|rashmi piu|toy store|gift/)) {
-    return {type:'expense', cat:'Love life'};
-  }
-  // ATM / Withdrawals
-  if(d.match(/withdrawal|atm/)) {
-    return {type:'expense', cat:'Other'};
-  }
-  // Bank charges
-  if(d.match(/ib ceft chgs|debit interest|advance income tax|traffic/)) {
-    return {type:'expense', cat:'Bills'};
-  }
-  // VMT Credit / refunds
-  if(d.includes('vmt credit')) {
-    return {type:'income', cat:'Other'};
-  }
-  // Credits / transfers in
-  if(d.includes('061100') || d.includes('bene/org')) {
-    return {type:'income', cat:'Other'};
-  }
-  
-  return {type:'expense', cat:'Other'};
-}
-
-// ── CSV PARSER — Handles ComBank and other formats ──
-function parseCSV(text, format, month, minAmt) {
-  const lines = text.split('\n');
-  const transactions = [];
-  let inData = false;
-  
-  for(let i = 0; i < lines.length; i++) {
-    const raw = lines[i].trim();
-    if(!raw) continue;
-    
-    // Parse as proper CSV (handles quoted commas)
-    const row = parseCSVRow(raw);
-    
-    if(format === 'combank' || format === 'generic') {
-      // ComBank format: ,Date,,Description,,Currency,Debit,Credit,Balance,,,
-      // Detect header row
-      if(row[1] === 'Transaction Date' || raw.includes('Transaction Date')) { inData = true; continue; }
-      if(!inData && row.length >= 8 && isDate(row[1])) inData = true;
-      if(!inData) continue;
-      
-      const date = row[1]?.trim();
-      const desc = row[3]?.trim();
-      const debitStr = (row[6] || '').trim().replace(/,/g, '');
-      const creditStr = (row[7] || '').trim().replace(/,/g, '');
-      
-      if(!date || !desc || !isDate(date)) continue;
-      if(desc.toLowerCase().includes('generated at')) break;
-      
-      const debit = parseFloat(debitStr) || 0;
-      const credit = parseFloat(creditStr) || 0;
-      
-      if(debit === 0 && credit === 0) continue;
-      
-      const amount = credit > 0 ? credit : debit;
-      if(amount < minAmt) continue;
-      
-      // Clean description — remove transaction reference numbers
-      const cleanDesc = cleanDescription(desc);
-      const autoType = credit > 0 ? 'income' : 'expense';
-      const guess = smartCategorise(cleanDesc);
-      // Override type based on credit/debit column - this is definitive
-      const finalType = credit > 0 ? 'income' : 'expense';
-      // But use smart categoriser for category
-      const finalCat = guess.cat;
-      
-      transactions.push({
-        id: uid(),
-        date: formatDate(date),
-        desc: cleanDesc,
-        rawDesc: desc,
-        amount: amount,
-        type: finalType,
-        cat: finalCat,
-        month: month,
-        selected: false
-      });
-    }
-  }
-  
-  return transactions;
-}
-
-function parseCSVRow(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for(let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if(ch === '"') { inQuotes = !inQuotes; }
-    else if(ch === ',' && !inQuotes) { result.push(current); current = ''; }
-    else { current += ch; }
-  }
-  result.push(current);
-  return result;
-}
-
-function isDate(str) {
-  return str && /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(str.trim());
-}
-
-function formatDate(dateStr) {
-  // Convert DD/MM/YYYY to YYYY-MM-DD for input[type=date]
-  const parts = dateStr.trim().split('/');
-  if(parts.length === 3) {
-    const day = parts[0].padStart(2,'0');
-    const mon = parts[1].padStart(2,'0');
-    const yr = parts[2].length === 2 ? '20'+parts[2] : parts[2];
-    return yr+'-'+mon+'-'+day;
-  }
-  return dateStr;
-}
-
-function cleanDescription(desc) {
-  // Remove bank reference numbers like "/ 029820043861 / -" and "/ O600039779142"
-  return desc
-    .replace(/PURCHASE /gi, '')
-    .replace(/\s*\/\s*[A-Z0-9]{9,}\/?.*/g, '')  // Remove ref numbers
-    .replace(/\s*\/\s*-\s*$/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+function showStatus(id, html, type) {
+  const el2 = document.getElementById(id);
+  if (!el2) return;
+  if (!html) { el2.innerHTML = ''; return; }
+  const colors = { ok: 'var(--green)', err: 'var(--red)', info: 'var(--blue)' };
+  const bg     = { ok: 'var(--green2)', err: 'var(--red2)', info: 'var(--blue2)' };
+  el2.innerHTML = `<div style="padding:10px 14px;border-radius:var(--r);background:${bg[type]};color:${colors[type]};font-size:12.5px;line-height:1.6;margin-top:4px">${html}</div>`;
 }
 
 // ── REVIEW TABLE ──
-let reviewFilterMode = 'all';
-let reviewSearchQuery = '';
+let parsedFilterMode = 'all';
 
 function renderParsedRows() {
-  document.getElementById('parsedSection').style.display = '';
-  refreshReviewTable();
-  refreshPTotals();
-}
-
-function refreshReviewTable() {
+  const search = (document.getElementById('parsedSearch')?.value || '').toLowerCase();
   let rows = parsedRows.filter(r => {
-    if(reviewFilterMode === 'income') return r.type === 'income';
-    if(reviewFilterMode === 'expense') return r.type === 'expense';
-    if(reviewFilterMode === 'other') return r.cat === 'Other';
+    if (parsedFilterMode === 'income')  return r.type === 'income';
+    if (parsedFilterMode === 'expense') return r.type === 'expense';
+    if (parsedFilterMode === 'review')  return r.cat === 'Other';
     return true;
   });
-  if(reviewSearchQuery) {
-    const q = reviewSearchQuery.toLowerCase();
-    rows = rows.filter(r => r.desc.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q));
-  }
-  
+  if (search) rows = rows.filter(r => r.desc.toLowerCase().includes(search) || r.cat.toLowerCase().includes(search));
+
+  const count = document.getElementById('parsedCount');
+  if (count) count.textContent = `(${parsedRows.length} total, ${rows.length} shown)`;
+
   const body = document.getElementById('parsedBody');
-  if(!body) return;
-  
-  body.innerHTML = rows.map((r, i) => {
-    const actualIdx = parsedRows.indexOf(r);
-    return `<tr id="prow-${actualIdx}" style="${r.selected ? 'background:var(--accent4)' : ''}">
-      <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleRowSelect(${actualIdx},this)" style="cursor:pointer"></td>
-      <td style="color:var(--text3);font-size:11px">${r.date?.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1') || '—'}</td>
-      <td>
-        <div style="font-size:12px;font-weight:500;color:var(--text)">${r.desc}</div>
-        ${r.rawDesc && r.rawDesc !== r.desc ? `<div style="font-size:10px;color:var(--text3);margin-top:1px">${r.rawDesc.slice(0,50)}</div>` : ''}
+  if (!body) return;
+
+  const CATS_OPT = CATS.map(c => `<option>${c}</option>`).join('');
+
+  body.innerHTML = rows.map(r => {
+    const idx = parsedRows.indexOf(r);
+    const amtColor = r.type === 'income' ? 'var(--green)' : 'var(--red)';
+    const typeBg   = r.type === 'income' ? 'var(--green2)' : 'var(--red2)';
+    return `<tr id="pr${idx}" style="border-bottom:1px solid var(--border);${r.checked ? 'background:var(--accent4)' : ''}">
+      <td style="padding:8px;text-align:center">
+        <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="parsedRows[${idx}].checked=this.checked;syncAllChk()" style="cursor:pointer">
       </td>
-      <td style="font-family:var(--font-mono);font-weight:600;color:${r.type==='income'?'var(--green)':'var(--red)'}">
-        ${r.type==='income'?'+':'-'}${Math.round(r.amount).toLocaleString('en-LK')}
+      <td style="padding:8px;font-size:11.5px;color:var(--text3);white-space:nowrap">${toDisplayDate(r.date)}</td>
+      <td style="padding:8px">
+        <div style="font-size:12.5px;font-weight:500;color:var(--text)">${r.desc}</div>
+        ${r.rawDesc && r.rawDesc !== r.desc ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${r.rawDesc.slice(0,55)}</div>` : ''}
       </td>
-      <td>
-        <select onchange="parsedRows[${actualIdx}].type=this.value;refreshReviewTable();refreshPTotals()" style="font-size:11px;padding:3px 6px;border-radius:4px;border:1px solid var(--border2);background:${r.type==='income'?'var(--green2)':'var(--red2)'};color:${r.type==='income'?'var(--green)':'var(--red)'}">
+      <td style="padding:8px;text-align:right;font-weight:600;color:${amtColor};white-space:nowrap;font-family:var(--font-mono)">
+        ${r.type === 'income' ? '+' : '-'}LKR ${Math.round(r.amount).toLocaleString('en-LK')}
+      </td>
+      <td style="padding:8px">
+        <select onchange="parsedRows[${idx}].type=this.value;renderParsedRows();refreshPTotals()"
+          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:${typeBg};color:${amtColor};cursor:pointer">
           <option ${r.type==='expense'?'selected':''} value="expense">Expense</option>
-          <option ${r.type==='income'?'selected':''} value="income">Income</option>
+          <option ${r.type==='income'?'selected':''}  value="income">Income</option>
         </select>
       </td>
-      <td>
-        <select onchange="parsedRows[${actualIdx}].cat=this.value" style="font-size:11px;padding:3px 6px">
+      <td style="padding:8px">
+        <select onchange="parsedRows[${idx}].cat=this.value"
+          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer">
           ${CATS.map(c => `<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}
         </select>
       </td>
-      <td>
-        <select onchange="parsedRows[${actualIdx}].month=this.value" style="font-size:11px;padding:3px 6px;width:70px">
-          ${MONTHS.map(m => `<option ${m===r.month?'selected':''}>${m.split(' ')[0]}</option>`).join('')}
+      <td style="padding:8px">
+        <select onchange="parsedRows[${idx}].month=this.value"
+          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;width:70px">
+          ${MONTHS.map(m => `<option ${m===r.month?'selected':''}>${m.split(' ')[0].slice(0,3)}</option>`).join('')}
         </select>
       </td>
-      <td>
-        <button class="btn-danger" style="padding:3px 7px" onclick="parsedRows.splice(${actualIdx},1);renderParsedRows()">
-          <i class="ti ti-x" style="font-size:11px"></i>
+      <td style="padding:8px">
+        <button onclick="parsedRows.splice(${idx},1);renderParsedRows();refreshPTotals()"
+          style="background:var(--red2);border:none;color:var(--red);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px">
+          <i class="ti ti-x"></i>
         </button>
       </td>
     </tr>`;
   }).join('');
-  
-  // Update bulk toolbar
-  const selected = parsedRows.filter(r => r.selected);
-  const toolbar = document.getElementById('bulkToolbar');
-  const sc = document.getElementById('selectedCount');
-  if(toolbar) toolbar.style.display = selected.length > 0 ? 'flex' : 'none';
-  if(sc) sc.textContent = selected.length;
+
+  syncAllChk();
+  refreshPTotals();
 }
 
-window.reviewFilter = function(mode) {
-  reviewFilterMode = mode;
-  ['all','income','expense','uncategorised'].forEach(m => {
-    const btn = document.getElementById('rf-' + (m==='uncategorised'?'uncategorised':m));
-    if(btn) btn.style.background = m===mode ? 'var(--accent3)' : '';
+window.refreshPTotals = function() {
+  const inc = parsedRows.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
+  const exp = parsedRows.filter(r => r.type === 'expense').reduce((s,r) => s + r.amount, 0);
+  const el2 = document.getElementById('parsedTotals');
+  if (!el2) return;
+  el2.innerHTML = `
+    <span style="color:var(--text3)"><strong style="color:var(--text)">${parsedRows.length}</strong> transactions</span>
+    <span style="color:var(--text3)">Income: <strong style="color:var(--green)">+LKR ${Math.round(inc).toLocaleString()}</strong></span>
+    <span style="color:var(--text3)">Expenses: <strong style="color:var(--red)">-LKR ${Math.round(exp).toLocaleString()}</strong></span>
+    <span style="color:var(--text3)">Net: <strong style="color:${inc-exp>=0?'var(--green)':'var(--red)'}">${inc-exp>=0?'+':'-'}LKR ${Math.round(Math.abs(inc-exp)).toLocaleString()}</strong></span>`;
+};
+
+window.filterParsed = function(mode) {
+  parsedFilterMode = mode;
+  ['all','inc','exp','rev'].forEach(k => {
+    const btn = document.getElementById('pf-'+k);
+    if (btn) { btn.style.background=''; btn.style.color=''; }
   });
-  const buttons = document.querySelectorAll('#parsedSection .btn-ghost');
-  refreshReviewTable();
-};
-
-window.reviewSearch = function() {
-  reviewSearchQuery = document.getElementById('reviewSearch').value;
-  refreshReviewTable();
-};
-
-window.toggleSelectAll = function(cb) {
-  parsedRows.forEach(r => r.selected = cb.checked);
-  refreshReviewTable();
-};
-
-window.toggleRowSelect = function(idx, cb) {
-  parsedRows[idx].selected = cb.checked;
-  const sel = parsedRows.filter(r => r.selected);
-  const allCb = document.getElementById('selectAllCheck');
-  if(allCb) allCb.checked = sel.length === parsedRows.length;
-  const toolbar = document.getElementById('bulkToolbar');
-  const sc = document.getElementById('selectedCount');
-  if(toolbar) toolbar.style.display = sel.length > 0 ? 'flex' : 'none';
-  if(sc) sc.textContent = sel.length;
-};
-
-window.selectAllRows = function() {
-  parsedRows.forEach(r => r.selected = true);
-  const cb = document.getElementById('selectAllCheck');
-  if(cb) cb.checked = true;
-  refreshReviewTable();
-};
-
-window.deleteSelectedRows = function() {
-  const before = parsedRows.length;
-  parsedRows = parsedRows.filter(r => !r.selected);
-  toast('Removed '+(before-parsedRows.length)+' rows','ok');
+  const map = { all:'pf-all', income:'pf-inc', expense:'pf-exp', review:'pf-rev' };
+  const active = document.getElementById(map[mode]);
+  if (active) { active.style.background = 'var(--accent3)'; active.style.color = 'var(--accent2)'; }
   renderParsedRows();
 };
 
-window.applyBulkEdit = function() {
-  const cat = document.getElementById('bulkCat').value;
+window.toggleAll = function(cb) {
+  parsedRows.forEach(r => r.checked = cb.checked);
+  renderParsedRows();
+};
+
+function syncAllChk() {
+  const cb = document.getElementById('chkAll');
+  if (cb) cb.checked = parsedRows.length > 0 && parsedRows.every(r => r.checked);
+}
+
+window.applyBulk = function() {
+  const cat  = document.getElementById('bulkCat').value;
   const type = document.getElementById('bulkType').value;
-  parsedRows.filter(r => r.selected).forEach(r => {
-    if(cat) r.cat = cat;
-    if(type) r.type = type;
-    r.selected = false;
-  });
-  toast('Applied to selected rows','ok');
-  refreshReviewTable();
-  refreshPTotals();
+  const sel  = parsedRows.filter(r => r.checked);
+  if (!sel.length) { toast('No rows checked', 'err'); return; }
+  sel.forEach(r => { if (cat) r.cat = cat; if (type) r.type = type; });
+  toast(`Updated ${sel.length} rows`, 'ok');
+  document.getElementById('bulkCat').value = '';
+  document.getElementById('bulkType').value = '';
+  renderParsedRows();
 };
 
-window.refreshPTotals = function() {
-  const inc = parsedRows.filter(r => r.type==='income').reduce((s,r) => s+r.amount, 0);
-  const exp = parsedRows.filter(r => r.type==='expense').reduce((s,r) => s+r.amount, 0);
-  const el2 = document.getElementById('parsedTotals');
-  if(el2) el2.innerHTML = `
-    <span style="color:var(--text3)">${parsedRows.length} transactions</span>
-    <span style="color:var(--text3)">Income: <strong style="color:var(--green)">+LKR ${Math.round(inc).toLocaleString()}</strong></span>
-    <span style="color:var(--text3)">Expenses: <strong style="color:var(--red)">-LKR ${Math.round(exp).toLocaleString()}</strong></span>
-    <span style="color:var(--text3)">Net: <strong style="color:${inc-exp>=0?'var(--green)':'var(--red)'}">${inc-exp>=0?'+':'-'}LKR ${Math.round(Math.abs(inc-exp)).toLocaleString()}</strong></span>
-  `;
+window.deleteChecked = function() {
+  const before = parsedRows.length;
+  parsedRows = parsedRows.filter(r => !r.checked);
+  toast(`Removed ${before - parsedRows.length} rows`, 'ok');
+  renderParsedRows();
 };
 
-
+// ══════════════════════════════════════════════════════
+//  AI TEXT PARSER (existing, kept)
+// ══════════════════════════════════════════════════════
 window.parseStatement=async function(){
   const key=localStorage.getItem('fai_gemini')||'';
   if(!key){toast('Enter your Gemini API key in Settings first','err');gotoPage('settings');return;}
