@@ -326,7 +326,7 @@ nav { -webkit-overflow-scrolling: touch; }
     <div class="sb-logo-mark"><i class="ti ti-chart-dots"></i></div>
     <div>
       <div class="sb-brand">FinanceAI</div>
-      <div class="sb-version">v12 · LKR</div>
+      <div class="sb-version">v13 · LKR</div>
     </div>
   </div>
 
@@ -1715,7 +1715,7 @@ function renderParsedRows() {
     const isInc = r.type === 'income';
     const amtCol = isInc ? '#10B981' : '#F43F5E';
     const typeBg  = isInc ? 'rgba(16,185,129,.15)' : 'rgba(244,63,94,.1)';
-    const rowBg   = r.checked ? 'background:rgba(99,102,241,.08);' : '';
+    const rowBg   = r.checked ? 'background:rgba(99,102,241,.08)' : 'background:#16171E';
 
     // Date: convert YYYY-MM-DD to DD/MM/YY
     let dateDisp = r.date || '';
@@ -1745,9 +1745,9 @@ function renderParsedRows() {
         '<div style="font-size:11px;color:var(--text3);margin-bottom:2px">' + dateDisp + '</div>' +
         '<div style="font-size:12.5px;font-weight:600;color:' + amtCol + '">' + (isInc ? '+' : '−') + 'LKR ' + Math.round(r.amount).toLocaleString('en-LK') + '</div>' +
       '</td>' +
-      '<td style="padding:7px 8px">' +
-        '<div style="font-size:12.5px;font-weight:500;color:var(--text)">' + descText + '</div>' +
-        (subText ? '<div style="font-size:10px;color:var(--text3);margin-top:1px">' + subText.slice(0,50) + '</div>' : '') +
+      '<td style="padding:7px 8px;min-width:200px">' +
+        '<div style="font-size:12.5px;font-weight:500;color:#F0F1F7;min-width:150px">' + descText + '</div>' +
+        (subText ? '<div style="font-size:10px;color:#4F5068;margin-top:1px">' + subText.slice(0,50) + '</div>' : '') +
       '</td>' +
       '<td style="padding:7px 6px">' +
         '<select onchange="parsedRows[' + idx + '].type=this.value;renderParsedRows()" ' +
