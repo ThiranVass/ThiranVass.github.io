@@ -2085,7 +2085,7 @@ function renderCatManage() {
     return '<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);font-size:12px">'
       + '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + getCatColor(c) + ';flex-shrink:0"></span>'
       + c
-      + (isDefault ? '' : ' <button onclick="removeCustomCat('' + c.replace(/'/g, "\'") + '')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:13px;line-height:1;margin-left:2px">&times;</button>')
+      + (isDefault ? '' : ' <button onclick="removeCustomCat(this)" data-cat="' + c.replace(/"/g, '&quot;') + '" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:13px;line-height:1;margin-left:2px">&times;</button>')
       + '</div>';
   }).join('');
 }
@@ -2102,8 +2102,9 @@ window.addCustomCat = function() {
   toast('"' + name + '" added', 'ok');
 };
 
-window.removeCustomCat = function(cat) {
-  if (!confirm('Remove category "' + cat + '"? Existing transactions keep their category.')) return;
+window.removeCustomCat = function(btnEl) {
+  const cat = btnEl ? btnEl.getAttribute('data-cat') : null;
+  if (!cat) return;
   CATS = CATS.filter(c => c !== cat);
   saveCATS();
   renderCatManage();
