@@ -326,7 +326,7 @@ nav { -webkit-overflow-scrolling: touch; }
     <div class="sb-logo-mark"><i class="ti ti-chart-dots"></i></div>
     <div>
       <div class="sb-brand">FinanceAI</div>
-      <div class="sb-version">v7 · FIXED · LKR</div>
+      <div class="sb-version">v8 · DEBUG · LKR</div>
     </div>
   </div>
 
@@ -1640,7 +1640,10 @@ function processCSVFile(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
+      console.log('CSV loaded, length:', e.target.result.length);
+      console.log('First 200 chars:', e.target.result.substring(0,200));
       const rows = parseCSVText(e.target.result, bank, month, minAmt);
+      console.log('Parsed rows:', rows.length, rows.slice(0,2));
       if (!rows.length) {
         showStatus('csvStatus', 'No transactions found. Check the bank format selector.', 'err');
         return;
