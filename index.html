@@ -672,18 +672,28 @@ nav { -webkit-overflow-scrolling: touch; }
           <button class="btn-ghost" onclick="deleteChecked()" style="font-size:11px;padding:5px 10px;color:var(--red)"><i class="ti ti-trash"></i> Delete checked</button>
         </div>
 
-        <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2)">
-          <table style="width:100%;border-collapse:collapse;min-width:700px">
+        <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--r2);margin-top:4px">
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+            <colgroup>
+              <col style="width:36px">
+              <col style="width:90px">
+              <col style="width:auto">
+              <col style="width:130px">
+              <col style="width:110px">
+              <col style="width:155px">
+              <col style="width:72px">
+              <col style="width:36px">
+            </colgroup>
             <thead>
-              <tr style="background:var(--bg3)">
-                <th style="padding:9px 6px;text-align:center;width:32px;border-bottom:1px solid var(--border)"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer;width:14px;height:14px"></th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:88px">DATE</th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em">DESCRIPTION</th>
-                <th style="padding:9px 8px;text-align:right;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:110px">AMOUNT</th>
-                <th style="padding:9px 6px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:100px">TYPE</th>
-                <th style="padding:9px 6px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:160px">CATEGORY</th>
-                <th style="padding:9px 6px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:68px">MONTH</th>
-                <th style="width:36px;border-bottom:1px solid var(--border)"></th>
+              <tr style="background:var(--bg3);border-bottom:1px solid var(--border)">
+                <th style="padding:8px 6px;text-align:center"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer;width:13px;height:13px"></th>
+                <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">DATE</th>
+                <th style="padding:8px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">DESCRIPTION</th>
+                <th style="padding:8px;text-align:right;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">AMOUNT (LKR)</th>
+                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">TYPE</th>
+                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">CATEGORY</th>
+                <th style="padding:8px 6px;text-align:left;font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.06em">MONTH</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="parsedBody"></tbody>
@@ -1420,187 +1430,188 @@ window.switchITab = function(tab) {
 
 // Smart categoriser for Sri Lankan merchants
 function autoCategorise(desc) {
-  const d = (desc || '').toLowerCase();
+  const d = (desc || '').toLowerCase().replace(/purchase\s+/i, '');
 
   // ── INCOME signals ──
   if (/salary|tomorrow advertising|june salary|advance income tx credit|wepay.*ef |vmt credit|pickme.*homies|061100|bene\/org|payment.*miss|interest\b/.test(d) && !/purchase/.test(d)) {
     return { type: 'income', cat: 'Other' };
   }
 
+  // ── INCOME / SALARY ──
+  if (/salary|tomorrow advertising|wepay|vmt credit|interest credit|payroll|advance salary/.test(d) && !/purchase/.test(d))
+    return { type: 'income', cat: 'Other' };
+
+  // ── TRANSFERS IN (credits) ──
+  if (/balapitiya|liyanage|rashmi piu.*credit|transfer.*credit|online.*credit|neft.*credit|rtgs.*credit|ib cr/.test(d) && !/purchase/.test(d))
+    return { type: 'income', cat: 'Other' };
+
   // ── GROCERIES ──
-  if (/keells|cargills|arpico|spar\b|meegamu|village bakery|perera store|brescia mart|c s l holdings|foodcity|food city|supermarket|grocers|mart\b/.test(d))
+  if (/keells|cargills|arpico|spar |meegamu|village bakery|perera store|brescia|c s l holdings|foodcity|food city|supermarket|grocers/.test(d))
     return { type: 'expense', cat: 'Groceries' };
 
   // ── FOOD & DRINK ──
-  if (/uber eats|barista|prego|dinemore|urban smokehouse|softlogic resta|sun food|restaurant|koko\b|simply strawberries|mr\.deen|food studio|negombo hotel.*food|cafe|bakery|mikayla cove/.test(d))
+  if (/uber eats|ubereats|barista|prego|dinemore|urban smokehouse|restaurant|koko |simply strawberries|mr.deen|food studio|cafe|bakery|coffee|pizza|burger|kottu|rice & curry/.test(d))
     return { type: 'expense', cat: 'Food & Drink' };
 
-  // ── SUBSCRIPTIONS / DIGITAL ──
-  if (/apple\.com|dialog axiata|netflix|spotify|adobe|youtube|amazon prime|music pay/.test(d))
+  // ── SUBSCRIPTIONS ──
+  if (/apple.com|apple.com\/bill|dialog axiata|netflix|spotify|adobe|youtube premium|amazon prime|music pay|icloud|google one/.test(d))
     return { type: 'expense', cat: 'Subscriptions' };
 
   // ── TRAVEL / TRANSPORT ──
-  if (/pickme|uber\b|airline|hotel\b|topaz|negombo hotel|night stay|woodnest|mikayla|airbnb|makka|taxi|tuk|bus|train/.test(d))
+  if (/pickme|uber |airline|airport|topaz|negombo hotel|night stay|woodnest|mikayla|airbnb|taxi|tuk tuk|bus ticket|train|ola |rapido/.test(d))
     return { type: 'expense', cat: 'Travel' };
 
   // ── FUEL ──
-  if (/fuel|laugfs|marine fuel|filling station|petrol|ceypetco|ioc\b|lanka filling/.test(d))
+  if (/fuel|laugfs|marine fuel|filling station|petrol|ceypetco|ioc |lanka filling|shell |fuel station/.test(d))
     return { type: 'expense', cat: 'Fuel' };
 
-  // ── HEALTH ──
-  if (/pharmacy|medical|hospital|clinic|doctor|lakshi|osu sala|channelling|lab\b|diagnostic/.test(d))
+  // ── HEALTH & WELLBEING ──
+  if (/pharmacy|medical|hospital|clinic|doctor|lakshi|osu sala|channelling|diagnostic|ayurveda|dental|optician|gym|fitness/.test(d))
     return { type: 'expense', cat: 'Health & Wellbeing' };
 
   // ── SHOPPING / RETAIL ──
-  if (/salon|wine store|bombuwala|softlogic\b|fashion|clothing|shoe|brands|cotton|splash|odel|h&m|zara/.test(d))
+  if (/salon|wine store|bombuwala|softlogic |fashion|clothing|shoe store|odel|splash|cotton on|zara|h&m|lifestyle|department store/.test(d))
     return { type: 'expense', cat: 'Shopping' };
 
   // ── BILLS / UTILITIES ──
-  if (/dialog\b|slt\b|mobitel|hutch|electricity|ceb\b|water board|leco\b|insurance|traffic division/.test(d))
+  if (/dialog |slt |mobitel|hutch|electricity|ceb |water board|leco |insurance|traffic division|internet bill|phone bill/.test(d))
     return { type: 'expense', cat: 'Bills' };
 
   // ── ENTERTAINMENT ──
-  if (/cinema|pvr|film|concert|event|game|bowling|escape room|recreation/.test(d))
+  if (/cinema|pvr|film|concert|event |bowling|escape room|recreation|sport|netflix game|playstation/.test(d))
     return { type: 'expense', cat: 'Entertainment' };
 
-  // ── LOVE LIFE / GIFTS ──
-  if (/piumika|rashmi piu|toy store koko|flower|florist|gift/.test(d))
+  // ── LOVE LIFE ──
+  if (/piumika|rashmi piu|flower|florist|jewellery|jewelry|valentines|date night|gift shop|toy store/.test(d))
     return { type: 'expense', cat: 'Love life' };
 
-  // ── BANK FEES / CHARGES ──
-  if (/ib ceft chgs|debit interest|advance income tax|stamp duty|service charge|sms alert|annual fee/.test(d))
+  // ── BANK FEES ──
+  if (/ib ceft chgs|debit interest|advance income tax|stamp duty|service charge|sms alert|annual fee|bank charge/.test(d))
     return { type: 'expense', cat: 'Bills' };
 
-  // ── ATM / WITHDRAWALS ──
-  if (/withdrawal|atm\b|cash/.test(d))
+  // ── ATM / CASH ──
+  if (/withdrawal|atm |cash withdrawal/.test(d))
     return { type: 'expense', cat: 'Other' };
 
-  // Default: expenses are "Other", credits reviewed
   return { type: 'expense', cat: 'Other' };
 }
 
 // Parse a CSV row respecting quoted fields
+// ── CSV PARSER — Bulletproof for ComBank format ──
 function parseCSVLine(line) {
-  const cols = [];
-  let cur = '', inQ = false;
+  const result = [];
+  let field = '';
+  let inQuotes = false;
   for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') { inQ = !inQ; }
-    else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-    else cur += c;
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { field += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(field.trim());
+      field = '';
+    } else {
+      field += ch;
+    }
   }
-  cols.push(cur.trim());
-  return cols;
+  result.push(field.trim());
+  return result;
 }
 
 function isDateStr(s) {
-  return s && /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s.trim());
+  return !!(s && /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(s.trim()));
 }
 
 function toISO(dateStr) {
+  if (!dateStr) return '';
   const p = dateStr.trim().split(/[\/\-]/);
   if (p.length !== 3) return dateStr;
-  const day = p[0].padStart(2,'0'), mon = p[1].padStart(2,'0');
+  const day = p[0].padStart(2,'0');
+  const mon = p[1].padStart(2,'0');
   const yr  = p[2].length === 2 ? '20'+p[2] : p[2];
-  return `${yr}-${mon}-${day}`;
+  return yr + '-' + mon + '-' + day;
 }
 
 function toDisplayDate(iso) {
   if (!iso) return '—';
   const p = iso.split('-');
-  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso;
+  return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : iso;
 }
 
-function detectMonth(dateISO) {
-  if (!dateISO) return null;
-  const d = new Date(dateISO);
-  if (isNaN(d)) return null;
-  return MONTHS[d.getMonth()] || null;
+function detectMonth(isoDate) {
+  if (!isoDate) return null;
+  try {
+    const d = new Date(isoDate + 'T00:00:00');
+    if (isNaN(d.getTime())) return null;
+    return MONTHS[d.getMonth()] || null;
+  } catch(e) { return null; }
 }
 
 function cleanDesc(raw) {
+  if (!raw) return '';
   return raw
     .replace(/^PURCHASE\s+/i, '')
-    .replace(/\s*\/\s*[A-Z0-9]{8,}\s*\/.*$/i, '')
+    .replace(/\s*\/\s*[A-Z0-9O]{8,}[^/]*$/i, '')
     .replace(/\s*\/\s*-\s*$/, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 function parseCSVText(text, bankFmt, defaultMonth, minAmt) {
-  const rows = [];
-  const lines = text.split('\n');
+  const result = [];
+  // Normalize line endings
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
   let dataStarted = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue;
+    if (/generated at|all rights reserved/i.test(trimmed)) break;
 
-    const cols = parseCSVLine(line);
+    const cols = parseCSVLine(trimmed);
 
-    // ComBank format detection: look for Transaction Date header
+    // Detect header — "Transaction Date" signals start
     if (!dataStarted) {
-      if (line.includes('Transaction Date') || line.includes('transaction date')) {
-        dataStarted = true; continue;
-      }
-      // Also auto-start if first column empty and second looks like a date
-      if (cols.length >= 8 && isDateStr(cols[1])) dataStarted = true;
-      if (!dataStarted) continue;
+      if (/Transaction Date/i.test(trimmed)) { dataStarted = true; continue; }
+      // Auto-detect: if col[1] is a date format, start reading
+      if (cols.length >= 8 && isDateStr(cols[1])) { dataStarted = true; }
+      else { continue; }
     }
 
-    // Stop at footer rows
-    if (/generated at|commercial bank of ceylon|all rights reserved/i.test(line)) break;
+    if (cols.length < 8) continue;
 
-    if (bankFmt === 'combank' || bankFmt === 'generic') {
-      // Format: ,Date,,Description,,Currency,Debit,Credit,Balance,...
-      const date    = cols[1] || '';
-      const rawDesc = cols[3] || '';
-      const debitS  = (cols[6] || '').replace(/,/g, '');
-      const creditS = (cols[7] || '').replace(/,/g, '');
+    // ComBank: [empty][date][empty][desc][empty][currency][debit][credit][balance]...
+    const date    = (cols[1] || '').trim();
+    const rawDesc = (cols[3] || '').trim();
+    if (!isDateStr(date) || !rawDesc) continue;
+    if (/generated at/i.test(rawDesc)) break;
 
-      if (!isDateStr(date) || !rawDesc) continue;
-      if (/generated at/i.test(rawDesc)) break;
+    const debit  = parseFloat((cols[6] || '').replace(/,/g,'')) || 0;
+    const credit = parseFloat((cols[7] || '').replace(/,/g,'')) || 0;
+    if (debit === 0 && credit === 0) continue;
 
-      const debit  = parseFloat(debitS)  || 0;
-      const credit = parseFloat(creditS) || 0;
-      if (debit === 0 && credit === 0) continue;
+    const amount = credit > 0 ? credit : debit;
+    if ((minAmt || 0) > 0 && amount < minAmt) continue;
 
-      const amount = credit > 0 ? credit : debit;
-      if (amount < minAmt) continue;
+    const isoDate = toISO(date);
+    const desc    = cleanDesc(rawDesc) || rawDesc;
+    const type    = credit > 0 ? 'income' : 'expense';
+    const guess   = autoCategorise(rawDesc);
+    const month   = detectMonth(isoDate) || defaultMonth;
 
-      const iso   = toISO(date);
-      const desc  = cleanDesc(rawDesc);
-      const guess = autoCategorise(rawDesc);
-      const type  = credit > 0 ? 'income' : 'expense';
-      const month = detectMonth(iso) || defaultMonth;
-
-      rows.push({ id: uid(), date: iso, desc, rawDesc, amount, type, cat: guess.cat, month, checked: false });
-
-    } else if (bankFmt === 'hnb' || bankFmt === 'sampath' || bankFmt === 'boc') {
-      // Generic: Date, Description, Debit, Credit (columns 0-3)
-      const date    = cols[0] || '';
-      const rawDesc = cols[1] || '';
-      const debitS  = (cols[2] || '').replace(/,/g, '');
-      const creditS = (cols[3] || '').replace(/,/g, '');
-
-      if (!isDateStr(date) || !rawDesc) continue;
-
-      const debit  = parseFloat(debitS)  || 0;
-      const credit = parseFloat(creditS) || 0;
-      if (debit === 0 && credit === 0) continue;
-      const amount = credit > 0 ? credit : debit;
-      if (amount < minAmt) continue;
-
-      const iso   = toISO(date);
-      const desc  = cleanDesc(rawDesc);
-      const guess = autoCategorise(rawDesc);
-      const type  = credit > 0 ? 'income' : 'expense';
-      const month = detectMonth(iso) || defaultMonth;
-
-      rows.push({ id: uid(), date: iso, desc, rawDesc, amount, type, cat: guess.cat, month, checked: false });
-    }
+    result.push({
+      id:      uid(),
+      date:    isoDate,
+      desc:    desc,
+      rawDesc: rawDesc,
+      amount:  amount,
+      type:    type,
+      cat:     guess.cat,
+      month:   month,
+      checked: false
+    });
   }
-  return rows;
+  return result;
 }
 
 // ── FILE HANDLING ──
@@ -1668,63 +1679,94 @@ function renderParsedRows() {
     if (parsedFilterMode === 'review')  return r.cat === 'Other';
     return true;
   });
-  if (search) rows = rows.filter(r => (r.desc||'').toLowerCase().includes(search) || (r.cat||'').toLowerCase().includes(search));
+  if (search) rows = rows.filter(r =>
+    (r.desc||'').toLowerCase().includes(search) ||
+    (r.cat||'').toLowerCase().includes(search) ||
+    (r.rawDesc||'').toLowerCase().includes(search)
+  );
 
-  const count = document.getElementById('parsedCount');
-  if (count) count.textContent = '(' + parsedRows.length + ' total, ' + rows.length + ' shown)';
+  const countEl = document.getElementById('parsedCount');
+  if (countEl) countEl.textContent = '(' + parsedRows.length + ' total · ' + rows.length + ' shown)';
 
   const body = document.getElementById('parsedBody');
   if (!body) return;
 
-  // Build category options including custom ones
   const allCats = getAllCats();
-  const catOpts = (selectedCat) => allCats.map(c =>
-    `<option value="${c}" ${c===selectedCat?'selected':''}>${c}</option>`
-  ).join('') + `<option value="__new__">+ Add new category…</option>`;
+
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3);font-size:13px">No transactions match the filter</td></tr>';
+    syncAllChk(); refreshPTotals(); return;
+  }
 
   body.innerHTML = rows.map(r => {
     const idx = parsedRows.indexOf(r);
     if (idx === -1) return '';
-    const amtColor = r.type === 'income' ? 'var(--green)' : 'var(--red)';
-    const typeBg   = r.type === 'income' ? 'rgba(16,185,129,.15)' : 'rgba(244,63,94,.12)';
-    const typeCol  = r.type === 'income' ? 'var(--green)' : 'var(--red)';
-    const rowBg    = r.checked ? 'background:rgba(99,102,241,.08);' : '';
-    // Display month abbreviation matching stored month
-    const mAbbr = (r.month||'').split(' ')[0].slice(0,3);
-    return '<tr style="border-bottom:1px solid var(--border);' + rowBg + '">'
-      + '<td style="padding:7px 6px;text-align:center;width:32px"><input type="checkbox"'
-      +   (r.checked?' checked':'') + ' onchange="parsedRows[' + idx + '].checked=this.checked;syncAllChk()" style="cursor:pointer;width:14px;height:14px"></td>'
 
-      + '<td style="padding:7px 8px;font-size:11px;color:var(--text3);white-space:nowrap;width:88px">' + toDisplayDate(r.date) + '</td>'
+    const isIncome  = r.type === 'income';
+    const amtColor  = isIncome ? '#10B981' : '#F43F5E';
+    const typeBg    = isIncome ? 'rgba(16,185,129,.12)' : 'rgba(244,63,94,.10)';
+    const typeColor = isIncome ? '#10B981' : '#F43F5E';
+    const rowStyle  = r.checked ? 'background:rgba(99,102,241,.07);' : '';
 
-      + '<td style="padding:7px 8px;max-width:260px">'
-      +   '<div style="font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.desc||'—') + '</div>'
-      +   (r.rawDesc && r.rawDesc !== r.desc ? '<div style="font-size:10px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r.rawDesc.slice(0,60) + '</div>' : '')
+    // Format date nicely: YYYY-MM-DD → DD/MM/YYYY
+    const displayDate = toDisplayDate(r.date);
+
+    // Build category options with correct selected
+    const catOptions = allCats.map(c =>
+      '<option value="' + c + '"' + (c === r.cat ? ' selected' : '') + '>' + c + '</option>'
+    ).join('') + '<option value="__new__">+ New category…</option>';
+
+    // Build month options
+    const monthOptions = MONTHS.map(m =>
+      '<option value="' + m + '"' + (m === r.month ? ' selected' : '') + '>' + m.split(' ')[0].slice(0,3) + ' ' + m.split(' ')[1].slice(2) + '</option>'
+    ).join('');
+
+    return '<tr style="border-bottom:1px solid var(--border);' + rowStyle + '">'
+
+      // Checkbox
+      + '<td style="padding:7px 6px;text-align:center;vertical-align:middle">'
+      + '<input type="checkbox"' + (r.checked ? ' checked' : '') + ' onchange="parsedRows[' + idx + '].checked=this.checked;syncAllChk()" style="cursor:pointer;width:13px;height:13px"></td>'
+
+      // Date
+      + '<td style="padding:7px 8px;vertical-align:middle;font-size:11.5px;color:var(--text3);white-space:nowrap">' + displayDate + '</td>'
+
+      // Description (main + raw below)
+      + '<td style="padding:7px 8px;vertical-align:middle;overflow:hidden">'
+      + '<div style="font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + (r.desc||'').replace(/"/g,'&quot;') + '">' + (r.desc || '—') + '</div>'
+      + (r.rawDesc && r.rawDesc !== r.desc
+          ? '<div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px" title="' + (r.rawDesc||'').replace(/"/g,'&quot;') + '">' + r.rawDesc.slice(0,55) + '</div>'
+          : '')
       + '</td>'
 
-      + '<td style="padding:7px 8px;text-align:right;font-weight:700;color:' + amtColor + ';white-space:nowrap;font-family:var(--font-mono);width:110px">'
-      +   (r.type==='income'?'+':'-') + 'LKR ' + Math.round(r.amount).toLocaleString('en-LK')
+      // Amount
+      + '<td style="padding:7px 8px;vertical-align:middle;text-align:right;font-weight:700;font-size:13px;color:' + amtColor + ';white-space:nowrap;font-family:var(--font-mono)">'
+      + (isIncome ? '+' : '−') + Math.round(r.amount).toLocaleString('en-LK')
       + '</td>'
 
-      + '<td style="padding:7px 6px;width:100px"><select onchange="parsedRows[' + idx + '].type=this.value;renderParsedRows()" '
-      +   'style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:' + typeBg + ';color:' + typeCol + ';cursor:pointer;width:100%">'
-      +   '<option value="expense"' + (r.type==='expense'?' selected':'') + '>Expense</option>'
-      +   '<option value="income"' + (r.type==='income'?' selected':'') + '>Income</option>'
+      // Type dropdown
+      + '<td style="padding:7px 6px;vertical-align:middle">'
+      + '<select onchange="parsedRows[' + idx + '].type=this.value;renderParsedRows()" style="width:100%;font-size:11.5px;padding:4px 5px;border-radius:6px;border:1px solid var(--border2);background:' + typeBg + ';color:' + typeColor + ';cursor:pointer;font-weight:500">'
+      + '<option value="expense"' + (!isIncome ? ' selected' : '') + '>Expense</option>'
+      + '<option value="income"' + (isIncome ? ' selected' : '') + '>Income</option>'
       + '</select></td>'
 
-      + '<td style="padding:7px 6px;width:160px"><select onchange="handleCatChange(this,' + idx + ')" '
-      +   'style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;width:100%">'
-      +   catOpts(r.cat)
+      // Category dropdown
+      + '<td style="padding:7px 6px;vertical-align:middle">'
+      + '<select onchange="handleCatChange(this,' + idx + ')" style="width:100%;font-size:11.5px;padding:4px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer">'
+      + catOptions
       + '</select></td>'
 
-      + '<td style="padding:7px 6px;width:68px"><select onchange="parsedRows[' + idx + '].month=this.value" '
-      +   'style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;width:100%">'
-      +   MONTHS.map(m => '<option value="' + m + '"' + (m===r.month?' selected':'') + '>' + m.split(' ')[0].slice(0,3) + '</option>').join('')
+      // Month dropdown
+      + '<td style="padding:7px 6px;vertical-align:middle">'
+      + '<select onchange="parsedRows[' + idx + '].month=this.value" style="width:100%;font-size:11px;padding:4px 4px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer">'
+      + monthOptions
       + '</select></td>'
 
-      + '<td style="padding:7px 6px;width:36px"><button onclick="parsedRows.splice(' + idx + ',1);renderParsedRows()" '
-      +   'style="background:var(--red2);border:none;color:var(--red);padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px">'
-      +   '<i class="ti ti-x"></i></button></td>'
+      // Delete
+      + '<td style="padding:7px 6px;vertical-align:middle;text-align:center">'
+      + '<button onclick="parsedRows.splice(' + idx + ',1);renderParsedRows()" style="background:none;border:1px solid rgba(244,63,94,.3);color:var(--red);padding:3px 6px;border-radius:5px;cursor:pointer;font-size:11px;display:flex;align-items:center">'
+      + '<i class="ti ti-x"></i></button></td>'
+
       + '</tr>';
   }).join('');
 
