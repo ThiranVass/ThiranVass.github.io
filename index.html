@@ -662,7 +662,7 @@ nav { -webkit-overflow-scrolling: touch; }
         <!-- Bulk actions -->
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
           <input type="text" id="parsedSearch" oninput="renderParsedRows()" placeholder="Search descriptions…" style="font-size:11.5px;padding:5px 10px;width:200px">
-          <select id="bulkCat" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set category…</option><option>Bills</option><option>Subscriptions</option><option>Entertainment</option><option>Food &amp; Drink</option><option>Groceries</option><option>Health &amp; Wellbeing</option><option>Other</option><option>Shopping</option><option>Fuel</option><option>Travel</option><option>Love life</option><option>Gifts</option></select>
+          <select id="bulkCat" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set category…</option></select>
           <select id="bulkType" style="font-size:11.5px;padding:5px 8px"><option value="">Bulk set type…</option><option value="expense">Expense</option><option value="income">Income</option></select>
           <button class="btn-ghost" onclick="applyBulk()" style="font-size:11px;padding:5px 10px"><i class="ti ti-check"></i> Apply to checked</button>
           <button class="btn-ghost" onclick="deleteChecked()" style="font-size:11px;padding:5px 10px;color:var(--red)"><i class="ti ti-trash"></i> Delete checked</button>
@@ -672,13 +672,13 @@ nav { -webkit-overflow-scrolling: touch; }
           <table style="width:100%;border-collapse:collapse;min-width:700px">
             <thead>
               <tr style="background:var(--bg3)">
-                <th style="padding:9px 8px;text-align:center;width:36px;border-bottom:1px solid var(--border)"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer"></th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">DATE</th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">DESCRIPTION</th>
-                <th style="padding:9px 8px;text-align:right;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">AMOUNT</th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">TYPE</th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">CATEGORY</th>
-                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:400;border-bottom:1px solid var(--border);letter-spacing:.04em">MONTH</th>
+                <th style="padding:9px 6px;text-align:center;width:32px;border-bottom:1px solid var(--border)"><input type="checkbox" id="chkAll" onchange="toggleAll(this)" style="cursor:pointer;width:14px;height:14px"></th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:88px">DATE</th>
+                <th style="padding:9px 8px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em">DESCRIPTION</th>
+                <th style="padding:9px 8px;text-align:right;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:110px">AMOUNT</th>
+                <th style="padding:9px 6px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:100px">TYPE</th>
+                <th style="padding:9px 6px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:160px">CATEGORY</th>
+                <th style="padding:9px 6px;text-align:left;font-size:10.5px;color:var(--text3);font-weight:500;border-bottom:1px solid var(--border);letter-spacing:.04em;width:68px">MONTH</th>
                 <th style="width:36px;border-bottom:1px solid var(--border)"></th>
               </tr>
             </thead>
@@ -783,6 +783,15 @@ nav { -webkit-overflow-scrolling: touch; }
           <div class="setting-label">About FinanceAI</div>
           <div class="setting-desc">All data is stored in your browser's localStorage. Nothing leaves your device except Gemini API calls for statement parsing. Built for Sri Lankan personal finance management.</div>
         </div>
+      </div>
+    </div>
+    <!-- Category management -->
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Spending categories</span><span class="panel-sub">Add or remove custom categories</span></div>
+      <div id="catManageList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="newCatInput" placeholder="New category name…" style="flex:1;max-width:240px" onkeydown="if(event.key==='Enter')addCustomCat()">
+        <button class="btn-primary" onclick="addCustomCat()" style="font-size:12px"><i class="ti ti-plus"></i> Add category</button>
       </div>
     </div>
   </div>
@@ -919,8 +928,18 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ── CONSTANTS ──
-const CATS=['Bills','Subscriptions','Entertainment','Food & Drink','Groceries','Health & Wellbeing','Other','Shopping','Fuel','Travel','Love life','Gifts'];
-const CAT_COLORS={'Bills':'#818CF8','Subscriptions':'#A78BFA','Entertainment':'#F472B6','Food & Drink':'#FB923C','Groceries':'#4ADE80','Health & Wellbeing':'#34D399','Other':'#94A3B8','Shopping':'#60A5FA','Fuel':'#FBBF24','Travel':'#2DD4BF','Love life':'#F87171','Gifts':'#E879F9'};
+// ── CATEGORIES — user-extendable, persisted in localStorage ──
+let CATS = JSON.parse(localStorage.getItem('fai_cats') || '["Bills","Subscriptions","Entertainment","Food & Drink","Groceries","Health & Wellbeing","Other","Shopping","Fuel","Travel","Love life","Gifts"]');
+function saveCATS() { localStorage.setItem('fai_cats', JSON.stringify(CATS)); }
+function getAllCats() { return CATS; }
+const CAT_COLORS_BASE={'Bills':'#818CF8','Subscriptions':'#A78BFA','Entertainment':'#F472B6','Food & Drink':'#FB923C','Groceries':'#4ADE80','Health & Wellbeing':'#34D399','Other':'#94A3B8','Shopping':'#60A5FA','Fuel':'#FBBF24','Travel':'#2DD4BF','Love life':'#F87171','Gifts':'#E879F9'};
+function getCatColor(cat) {
+  const base = CAT_COLORS_BASE[cat];
+  if (base) return base;
+  // Generate consistent color for custom categories
+  let h = 0; for (let i=0; i<cat.length; i++) h = (h*31+cat.charCodeAt(i))%360;
+  return `hsl(${h},65%,65%)`;
+}
 const CAT_ICONS={'Bills':'ti-bolt','Subscriptions':'ti-repeat','Entertainment':'ti-device-tv','Food & Drink':'ti-coffee','Groceries':'ti-shopping-cart','Health & Wellbeing':'ti-heart-rate-monitor','Other':'ti-dots','Shopping':'ti-shopping-bag','Fuel':'ti-gas-station','Travel':'ti-plane','Love life':'ti-heart','Gifts':'ti-gift'};
 const INV_COLORS={'Stocks / Shares':'#818CF8','Fixed Deposit':'#4ADE80','Unit Trust':'#60A5FA','Treasury Bonds':'#FBBF24','Gold':'#F59E0B','Property':'#34D399','Crypto':'#F472B6','Savings Account':'#2DD4BF','Other':'#94A3B8'};
 const INV_ICONS={'Stocks / Shares':'ti-chart-candle','Fixed Deposit':'ti-building-bank','Unit Trust':'ti-chart-pie','Treasury Bonds':'ti-certificate','Gold':'ti-coin','Property':'ti-home','Crypto':'ti-currency-bitcoin','Savings Account':'ti-piggy-bank','Other':'ti-briefcase'};
@@ -1586,6 +1605,11 @@ function processCSVFile(file) {
       }
       parsedRows = rows;
       parsedFilterMode = 'all';
+      // Populate bulk category dropdown with current cats
+      const bc2 = document.getElementById('bulkCat');
+      if (bc2) {
+        bc2.innerHTML = '<option value="">Bulk set category…</option>' + getAllCats().map(c => '<option>' + c + '</option>').join('');
+      }
       document.getElementById('parsedSection').style.display = '';
       renderParsedRows();
       showStatus('csvStatus',
@@ -1619,63 +1643,91 @@ function renderParsedRows() {
     if (parsedFilterMode === 'review')  return r.cat === 'Other';
     return true;
   });
-  if (search) rows = rows.filter(r => r.desc.toLowerCase().includes(search) || r.cat.toLowerCase().includes(search));
+  if (search) rows = rows.filter(r => (r.desc||'').toLowerCase().includes(search) || (r.cat||'').toLowerCase().includes(search));
 
   const count = document.getElementById('parsedCount');
-  if (count) count.textContent = `(${parsedRows.length} total, ${rows.length} shown)`;
+  if (count) count.textContent = '(' + parsedRows.length + ' total, ' + rows.length + ' shown)';
 
   const body = document.getElementById('parsedBody');
   if (!body) return;
 
-  const CATS_OPT = CATS.map(c => `<option>${c}</option>`).join('');
+  // Build category options including custom ones
+  const allCats = getAllCats();
+  const catOpts = (selectedCat) => allCats.map(c =>
+    `<option value="${c}" ${c===selectedCat?'selected':''}>${c}</option>`
+  ).join('') + `<option value="__new__">+ Add new category…</option>`;
 
   body.innerHTML = rows.map(r => {
     const idx = parsedRows.indexOf(r);
+    if (idx === -1) return '';
     const amtColor = r.type === 'income' ? 'var(--green)' : 'var(--red)';
-    const typeBg   = r.type === 'income' ? 'var(--green2)' : 'var(--red2)';
-    return `<tr id="pr${idx}" style="border-bottom:1px solid var(--border);${r.checked ? 'background:var(--accent4)' : ''}">
-      <td style="padding:8px;text-align:center">
-        <input type="checkbox" ${r.checked ? 'checked' : ''} onchange="parsedRows[${idx}].checked=this.checked;syncAllChk()" style="cursor:pointer">
-      </td>
-      <td style="padding:8px;font-size:11.5px;color:var(--text3);white-space:nowrap">${toDisplayDate(r.date)}</td>
-      <td style="padding:8px">
-        <div style="font-size:12.5px;font-weight:500;color:var(--text)">${r.desc}</div>
-        ${r.rawDesc && r.rawDesc !== r.desc ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${r.rawDesc.slice(0,55)}</div>` : ''}
-      </td>
-      <td style="padding:8px;text-align:right;font-weight:600;color:${amtColor};white-space:nowrap;font-family:var(--font-mono)">
-        ${r.type === 'income' ? '+' : '-'}LKR ${Math.round(r.amount).toLocaleString('en-LK')}
-      </td>
-      <td style="padding:8px">
-        <select onchange="parsedRows[${idx}].type=this.value;renderParsedRows();refreshPTotals()"
-          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:${typeBg};color:${amtColor};cursor:pointer">
-          <option ${r.type==='expense'?'selected':''} value="expense">Expense</option>
-          <option ${r.type==='income'?'selected':''}  value="income">Income</option>
-        </select>
-      </td>
-      <td style="padding:8px">
-        <select onchange="parsedRows[${idx}].cat=this.value"
-          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer">
-          ${CATS.map(c => `<option ${c===r.cat?'selected':''}>${c}</option>`).join('')}
-        </select>
-      </td>
-      <td style="padding:8px">
-        <select onchange="parsedRows[${idx}].month=this.value"
-          style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;width:70px">
-          ${MONTHS.map(m => `<option ${m===r.month?'selected':''}>${m.split(' ')[0].slice(0,3)}</option>`).join('')}
-        </select>
-      </td>
-      <td style="padding:8px">
-        <button onclick="parsedRows.splice(${idx},1);renderParsedRows();refreshPTotals()"
-          style="background:var(--red2);border:none;color:var(--red);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:11px">
-          <i class="ti ti-x"></i>
-        </button>
-      </td>
-    </tr>`;
+    const typeBg   = r.type === 'income' ? 'rgba(16,185,129,.15)' : 'rgba(244,63,94,.12)';
+    const typeCol  = r.type === 'income' ? 'var(--green)' : 'var(--red)';
+    const rowBg    = r.checked ? 'background:rgba(99,102,241,.08);' : '';
+    // Display month abbreviation matching stored month
+    const mAbbr = (r.month||'').split(' ')[0].slice(0,3);
+    return '<tr style="border-bottom:1px solid var(--border);' + rowBg + '">'
+      + '<td style="padding:7px 6px;text-align:center;width:32px"><input type="checkbox"'
+      +   (r.checked?' checked':'') + ' onchange="parsedRows[' + idx + '].checked=this.checked;syncAllChk()" style="cursor:pointer;width:14px;height:14px"></td>'
+
+      + '<td style="padding:7px 8px;font-size:11px;color:var(--text3);white-space:nowrap;width:88px">' + toDisplayDate(r.date) + '</td>'
+
+      + '<td style="padding:7px 8px;max-width:260px">'
+      +   '<div style="font-size:12.5px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.desc||'—') + '</div>'
+      +   (r.rawDesc && r.rawDesc !== r.desc ? '<div style="font-size:10px;color:var(--text3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r.rawDesc.slice(0,60) + '</div>' : '')
+      + '</td>'
+
+      + '<td style="padding:7px 8px;text-align:right;font-weight:700;color:' + amtColor + ';white-space:nowrap;font-family:var(--font-mono);width:110px">'
+      +   (r.type==='income'?'+':'-') + 'LKR ' + Math.round(r.amount).toLocaleString('en-LK')
+      + '</td>'
+
+      + '<td style="padding:7px 6px;width:100px"><select onchange="parsedRows[' + idx + '].type=this.value;renderParsedRows()" '
+      +   'style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:' + typeBg + ';color:' + typeCol + ';cursor:pointer;width:100%">'
+      +   '<option value="expense"' + (r.type==='expense'?' selected':'') + '>Expense</option>'
+      +   '<option value="income"' + (r.type==='income'?' selected':'') + '>Income</option>'
+      + '</select></td>'
+
+      + '<td style="padding:7px 6px;width:160px"><select onchange="handleCatChange(this,' + idx + ')" '
+      +   'style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;width:100%">'
+      +   catOpts(r.cat)
+      + '</select></td>'
+
+      + '<td style="padding:7px 6px;width:68px"><select onchange="parsedRows[' + idx + '].month=this.value" '
+      +   'style="font-size:11px;padding:3px 5px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;width:100%">'
+      +   MONTHS.map(m => '<option value="' + m + '"' + (m===r.month?' selected':'') + '>' + m.split(' ')[0].slice(0,3) + '</option>').join('')
+      + '</select></td>'
+
+      + '<td style="padding:7px 6px;width:36px"><button onclick="parsedRows.splice(' + idx + ',1);renderParsedRows()" '
+      +   'style="background:var(--red2);border:none;color:var(--red);padding:4px 7px;border-radius:6px;cursor:pointer;font-size:11px">'
+      +   '<i class="ti ti-x"></i></button></td>'
+      + '</tr>';
   }).join('');
 
   syncAllChk();
   refreshPTotals();
 }
+
+// Handle category change — intercept "Add new category"
+window.handleCatChange = function(sel, idx) {
+  if (sel.value === '__new__') {
+    const newCat = prompt('Enter new category name:');
+    if (newCat && newCat.trim()) {
+      const cat = newCat.trim();
+      if (!getAllCats().includes(cat)) {
+        CATS.push(cat);
+        saveCATS();
+        toast('Category "' + cat + '" added', 'ok');
+      }
+      parsedRows[idx].cat = cat;
+      renderParsedRows();
+    } else {
+      // revert
+      sel.value = parsedRows[idx].cat;
+    }
+  } else {
+    parsedRows[idx].cat = sel.value;
+  }
+};
 
 window.refreshPTotals = function() {
   const inc = parsedRows.filter(r => r.type === 'income').reduce((s,r) => s + r.amount, 0);
@@ -1712,8 +1764,9 @@ function syncAllChk() {
 }
 
 window.applyBulk = function() {
-  const cat  = document.getElementById('bulkCat').value;
-  const type = document.getElementById('bulkType').value;
+  const bc = document.getElementById('bulkCat');
+  const cat  = bc ? bc.value : '';
+  const type = document.getElementById('bulkType')?.value || '';
   const sel  = parsedRows.filter(r => r.checked);
   if (!sel.length) { toast('No rows checked', 'err'); return; }
   sel.forEach(r => { if (cat) r.cat = cat; if (type) r.type = type; });
@@ -1781,16 +1834,49 @@ window.confirmImport=async function(){
   const btn=document.querySelector('#parsedSection .btn-primary');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving to cloud…';}
   try{
-    const batch=db.batch();
-    parsedRows.forEach(r=>{
-      const ref=db.collection('users').doc(currentUser.uid).collection('txns').doc(r.id);
-      batch.set(ref,{id:r.id,date:r.date,desc:r.description||r.desc||'',amount:r.amount,type:r.type,cat:r.category||r.cat||'Other',month:r.month,_ts:firebase.firestore.FieldValue.serverTimestamp()});
-    });
-    await batch.commit();
-    toast(parsedRows.length+' transactions saved to cloud ✓','ok');
-    parsedRows=[];el('parsedSection').style.display='none';el('stmtText').value='';showInlineToast('parseToast','','');
-  }catch(e){toast('Error: '+e.message,'err');}
-  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-cloud-upload"></i> Save to cloud';}
+    // Save in batches of 400 (Firestore limit is 500)
+    const BATCH_SIZE = 400;
+    let saved = 0;
+    for (let i = 0; i < parsedRows.length; i += BATCH_SIZE) {
+      const chunk = parsedRows.slice(i, i + BATCH_SIZE);
+      const batch = db.batch();
+      chunk.forEach(r => {
+        const id = r.id || uid();
+        const ref = db.collection('users').doc(currentUser.uid).collection('txns').doc(id);
+        // Determine correct month from actual date in CSV
+        let month = r.month;
+        if (r.date) {
+          try {
+            const d = new Date(r.date + 'T00:00:00');
+            if (!isNaN(d.getTime())) month = MONTHS[d.getMonth()] || r.month;
+          } catch(e) {}
+        }
+        batch.set(ref, {
+          id: id,
+          date: r.date || '',
+          desc: r.desc || r.description || '',
+          amount: Number(r.amount) || 0,
+          type: r.type || 'expense',
+          cat: r.cat || r.category || 'Other',
+          month: month || r.month,
+          _ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      await batch.commit();
+      saved += chunk.length;
+    }
+    toast(saved + ' transactions saved to cloud ✓', 'ok');
+    parsedRows = [];
+    const ps = el('parsedSection'); if(ps) ps.style.display = 'none';
+    const st = el('stmtText'); if(st) st.value = '';
+    showInlineToast('parseToast','','');
+    showStatus('csvStatus','','');
+    const fi = el('csvFile'); if(fi) fi.value = '';
+  }catch(e){
+    toast('Error saving: '+e.message,'err');
+    console.error(e);
+  }
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-cloud-upload"></i> Save all to cloud';}
 };
 
 // ══════════════════════════════════════════════════════
@@ -1972,6 +2058,41 @@ window.saveBudgets=async function(){
 // ══════════════════════════════════════════════════════
 //  SETTINGS
 // ══════════════════════════════════════════════════════
+// ── CATEGORY MANAGEMENT ──
+function renderCatManage() {
+  const el2 = document.getElementById('catManageList');
+  if (!el2) return;
+  const DEFAULT_CATS = ['Bills','Subscriptions','Entertainment','Food & Drink','Groceries','Health & Wellbeing','Other','Shopping','Fuel','Travel','Love life','Gifts'];
+  el2.innerHTML = getAllCats().map(c => {
+    const isDefault = DEFAULT_CATS.includes(c);
+    return '<div style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);font-size:12px">'
+      + '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + getCatColor(c) + ';flex-shrink:0"></span>'
+      + c
+      + (isDefault ? '' : ' <button onclick="removeCustomCat('' + c.replace(/'/g, "\'") + '')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:0;font-size:13px;line-height:1;margin-left:2px">&times;</button>')
+      + '</div>';
+  }).join('');
+}
+
+window.addCustomCat = function() {
+  const input = document.getElementById('newCatInput');
+  const name = (input?.value || '').trim();
+  if (!name) { toast('Enter a category name', 'err'); return; }
+  if (getAllCats().includes(name)) { toast('Category already exists', 'err'); return; }
+  CATS.push(name);
+  saveCATS();
+  if (input) input.value = '';
+  renderCatManage();
+  toast('"' + name + '" added', 'ok');
+};
+
+window.removeCustomCat = function(cat) {
+  if (!confirm('Remove category "' + cat + '"? Existing transactions keep their category.')) return;
+  CATS = CATS.filter(c => c !== cat);
+  saveCATS();
+  renderCatManage();
+  toast('"' + cat + '" removed', 'ok');
+};
+
 window.saveGeminiKey=window.saveApiKey=function(){
   const k=el('apiKeyInput').value.trim();
   if(!k){toast('Enter your Gemini API key','err');return;}
@@ -2026,12 +2147,12 @@ const renders={
   dashboard:renderDashboard,
   networth:renderNetworth,
   transactions:renderTxnPage,
-  import:()=>{},
+  import:()=>{ switchITab('csv'); },
   cards:renderCards,
   loans:renderLoans,
   investments:renderInvestments,
   budgets:renderBudgets,
-  settings:()=>{}
+  settings:()=>{ renderCatManage(); }
 };
 
 // Wire up nav items with both onclick and event listeners
