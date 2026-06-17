@@ -326,7 +326,7 @@ nav { -webkit-overflow-scrolling: touch; }
     <div class="sb-logo-mark"><i class="ti ti-chart-dots"></i></div>
     <div>
       <div class="sb-brand">FinanceAI</div>
-      <div class="sb-version">v15-LEDGER · LKR</div>
+      <div class="sb-version">v16 · LKR</div>
     </div>
   </div>
 
@@ -1648,105 +1648,158 @@ let parsedFilterMode = 'all';
 
 function renderParsedRows() {
   window._parsedRows = parsedRows;
-  const srch = (document.getElementById('parsedSearch')?.value || '').toLowerCase();
-  let rows = [...parsedRows];
-  if (parsedFilterMode === 'income')  rows = rows.filter(r => r.type === 'income');
-  if (parsedFilterMode === 'expense') rows = rows.filter(r => r.type === 'expense');
-  if (parsedFilterMode === 'review')  rows = rows.filter(r => r.cat === 'Other');
-  if (srch) rows = rows.filter(r =>
-    (r.desc||'').toLowerCase().includes(srch) ||
-    (r.rawDesc||'').toLowerCase().includes(srch)
-  );
+  var srch = (document.getElementById('parsedSearch') ? document.getElementById('parsedSearch').value : '').toLowerCase();
+  var rows = parsedRows.slice();
+  if(parsedFilterMode==='income')  rows=rows.filter(function(r){return r.type==='income';});
+  if(parsedFilterMode==='expense') rows=rows.filter(function(r){return r.type==='expense';});
+  if(parsedFilterMode==='review')  rows=rows.filter(function(r){return r.cat==='Other';});
+  if(srch) rows=rows.filter(function(r){return (r.desc||r.rawDesc||'').toLowerCase().indexOf(srch)>-1;});
 
-  // Update count
-  const ct = document.getElementById('parsedCount');
-  if (ct) ct.textContent = '(' + parsedRows.length + ' total, ' + rows.length + ' shown)';
+  var ct=document.getElementById('parsedCount');
+  if(ct) ct.textContent='('+parsedRows.length+' total, '+rows.length+' shown)';
 
-  // Populate bulk cat dropdown once
-  const bc = document.getElementById('bulkCat');
-  if (bc && bc.options.length <= 1) {
-    getAllCats().forEach(c => { const o=document.createElement('option');o.value=c;o.text=c;bc.appendChild(o); });
+  var bc=document.getElementById('bulkCat');
+  if(bc && bc.options.length<=1){
+    getAllCats().forEach(function(c){var o=document.createElement('option');o.value=c;o.text=c;bc.appendChild(o);});
   }
 
-  const body = document.getElementById('parsedBody');
-  if (!body) return;
+  var body=document.getElementById('parsedBody');
+  if(!body) return;
 
-  if (!rows.length) {
-    body.innerHTML = '<div style="padding:32px;text-align:center;color:#4F5068;font-size:13px">No transactions match the current filter</div>';
+  // Clear body
+  while(body.firstChild) body.removeChild(body.firstChild);
+
+  if(!rows.length){
+    var msg=document.createElement('div');
+    msg.style.cssText='padding:32px;text-align:center;color:#4F5068;font-size:13px';
+    msg.textContent='No transactions match the filter';
+    body.appendChild(msg);
     refreshPTotals(); return;
   }
 
-  const allCats = getAllCats();
-  // Grid: 36px | 100px | 1fr | 130px | 160px | 80px | 36px
-  const GRID = 'display:grid;grid-template-columns:36px 100px 1fr 130px 160px 80px 36px;gap:0;align-items:center;padding:9px 18px;border-bottom:1px solid rgba(255,255,255,.05)';
+  var allCats=getAllCats();
+  var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  let out = '';
-  for (let vi = 0; vi < rows.length; vi++) {
-    const r   = rows[vi];
-    const idx = parsedRows.indexOf(r);
-    if (idx < 0) continue;
+  rows.forEach(function(r, vi){
+    var idx=parsedRows.indexOf(r);
+    if(idx<0) return;
 
-    const isInc  = r.type === 'income';
-    const clr    = isInc ? '#10B981' : '#F43F5E';
-    const rowBg  = r.checked ? '#1e1f32' : (vi % 2 === 0 ? '#16171E' : '#1a1b24');
+    var isInc=r.type==='income';
+    var clr=isInc?'#10B981':'#F43F5E';
+    var bg=r.checked?'#1e1f32':(vi%2===0?'#16171E':'#1a1b24');
 
-    // Date: YYYY-MM-DD → DD MMM
-    let dd = r.date || '';
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dd)) {
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const p = dd.split('-');
-      dd = p[2] + ' ' + months[parseInt(p[1])-1];
+    // Format date
+    var dd=r.date||'';
+    if(dd.match(/^\d{4}-\d{2}-\d{2}$/)){
+      var p=dd.split('-');
+      dd=p[2]+' '+MONTHS[parseInt(p[1])-1];
     }
 
-    // Clean description with guaranteed fallback
-    const desc = r.desc && r.desc.trim() ? r.desc.trim()
-               : r.rawDesc && r.rawDesc.trim() ? r.rawDesc.trim()
-               : 'Unknown';
+    // Description with fallback
+    var desc = r.desc && r.desc.trim() ? r.desc.trim() :
+               r.rawDesc && r.rawDesc.trim() ? r.rawDesc.trim() : 'Unknown transaction';
+    var sub = (r.rawDesc && r.rawDesc !== r.desc) ? r.rawDesc.slice(0,50) : '';
 
-    // Raw sub-description
-    const sub = (r.rawDesc && r.rawDesc !== r.desc) ? r.rawDesc.trim().slice(0,50) : '';
+    // Amount
+    var amtText = (isInc?'+':'−')+' LKR '+Math.round(r.amount).toLocaleString('en-LK');
 
-    // Amount formatted
-    const amt = (isInc ? '+' : '−') + ' LKR ' + Math.round(r.amount).toLocaleString('en-LK');
+    // Build TR using DOM
+    var tr=document.createElement('tr');
+    tr.style.cssText='background:'+bg+';border-bottom:1px solid rgba(255,255,255,.05)';
 
-    // Category select
-    const catOpts = allCats.map(c =>
-      `<option value="${c}"${c===r.cat?' selected':''}>${c}</option>`
-    ).join('') + '<option value="__new__">+ New…</option>';
+    // TD helper
+    function mkTd(w){
+      var td=document.createElement('td');
+      td.style.cssText='padding:9px '+(w?w+'px':'10px');
+      return td;
+    }
 
-    out += `<div style="${GRID};background:${rowBg}">` +
+    // 1. Checkbox
+    var td1=document.createElement('td');
+    td1.style.cssText='padding:9px 8px;width:32px;text-align:center';
+    var chk=document.createElement('input');
+    chk.type='checkbox'; chk.checked=!!r.checked;
+    chk.style.cssText='cursor:pointer;width:14px;height:14px;accent-color:#6366F1';
+    (function(i){chk.onchange=function(){parsedRows[i].checked=this.checked;syncAllChk();};})(idx);
+    td1.appendChild(chk);
 
-      // Checkbox
-      `<div><input type="checkbox"${r.checked?' checked':''} onchange="parsedRows[${idx}].checked=this.checked;syncAllChk()" style="cursor:pointer;accent-color:#6366F1"></div>` +
+    // 2. Date
+    var td2=document.createElement('td');
+    td2.style.cssText='padding:9px 10px;white-space:nowrap;width:75px';
+    var dateSpan=document.createElement('span');
+    dateSpan.style.cssText='font-size:12px;color:#9394A5;font-family:monospace';
+    dateSpan.textContent=dd;
+    td2.appendChild(dateSpan);
 
-      // Date
-      `<div style="font-size:11.5px;color:#9394A5;font-family:var(--font-mono)">${dd}</div>` +
+    // 3. Description - KEY COLUMN
+    var td3=document.createElement('td');
+    td3.style.cssText='padding:9px 10px';
+    var d1=document.createElement('div');
+    d1.style.cssText='font-size:13px;font-weight:600;color:#F0F1F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px';
+    d1.textContent=desc;
+    td3.appendChild(d1);
+    if(sub){
+      var d2=document.createElement('div');
+      d2.style.cssText='font-size:11px;color:#4F5068;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;margin-top:2px';
+      d2.textContent=sub;
+      td3.appendChild(d2);
+    }
 
-      // Description — the key column
-      `<div style="padding-right:12px;min-width:0">` +
-        `<div style="font-size:13px;font-weight:600;color:#F0F1F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</div>` +
-        (sub ? `<div style="font-size:10.5px;color:#4F5068;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${sub}</div>` : '') +
-      `</div>` +
+    // 4. Amount
+    var td4=document.createElement('td');
+    td4.style.cssText='padding:9px 10px;white-space:nowrap;width:130px;text-align:right';
+    var amtSpan=document.createElement('span');
+    amtSpan.style.cssText='font-size:13px;font-weight:700;color:'+clr+';font-family:monospace';
+    amtSpan.textContent=amtText;
+    td4.appendChild(amtSpan);
 
-      // Amount
-      `<div style="font-size:13px;font-weight:700;color:${clr};font-family:var(--font-mono);text-align:right;padding-right:8px">${amt}</div>` +
+    // 5. Category select
+    var td5=document.createElement('td');
+    td5.style.cssText='padding:6px 8px;width:155px';
+    var catSel=document.createElement('select');
+    catSel.style.cssText='width:100%;font-size:12px;padding:5px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:#22232F;color:#F0F1F7;cursor:pointer';
+    allCats.forEach(function(c){
+      var o=document.createElement('option');
+      o.value=c; o.text=c;
+      if(c===r.cat) o.selected=true;
+      catSel.appendChild(o);
+    });
+    var newO=document.createElement('option');
+    newO.value='__new__'; newO.text='+ New category…';
+    catSel.appendChild(newO);
+    (function(i){catSel.onchange=function(){handleCatChange(this,i);};})(idx);
+    td5.appendChild(catSel);
 
-      // Category
-      `<div><select onchange="handleCatChange(this,${idx})" style="width:100%;font-size:11.5px;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:#22232F;color:#F0F1F7;cursor:pointer">${catOpts}</select></div>` +
+    // 6. Type select
+    var td6=document.createElement('td');
+    td6.style.cssText='padding:6px 8px;width:105px';
+    var typeSel=document.createElement('select');
+    typeSel.style.cssText='width:100%;font-size:12px;padding:5px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:'+(isInc?'rgba(16,185,129,.15)':'rgba(244,63,94,.12)')+';color:'+clr+';cursor:pointer;font-weight:600';
+    var expO=document.createElement('option');expO.value='expense';expO.text='Expense';if(!isInc)expO.selected=true;typeSel.appendChild(expO);
+    var incO=document.createElement('option');incO.value='income';incO.text='Income';if(isInc)incO.selected=true;typeSel.appendChild(incO);
+    (function(i){typeSel.onchange=function(){parsedRows[i].type=this.value;renderParsedRows();};})(idx);
+    td6.appendChild(typeSel);
 
-      // Type
-      `<div><select onchange="parsedRows[${idx}].type=this.value;renderParsedRows()" style="width:100%;font-size:11.5px;padding:4px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:${isInc?'rgba(16,185,129,.15)':'rgba(244,63,94,.12)'};color:${clr};cursor:pointer;font-weight:600">` +
-        `<option value="expense"${!isInc?' selected':''}>Expense</option>` +
-        `<option value="income"${isInc?' selected':''}>Income</option>` +
-      `</select></div>` +
+    // 7. Delete button
+    var td7=document.createElement('td');
+    td7.style.cssText='padding:6px 8px;width:36px;text-align:center';
+    var delBtn=document.createElement('button');
+    delBtn.innerHTML='&times;';
+    delBtn.style.cssText='background:none;border:none;color:#4F5068;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:4px';
+    delBtn.onmouseover=function(){this.style.color='#F43F5E';this.style.background='rgba(244,63,94,.1)';};
+    delBtn.onmouseout=function(){this.style.color='#4F5068';this.style.background='none';};
+    (function(i){delBtn.onclick=function(){parsedRows.splice(i,1);renderParsedRows();};})(idx);
+    td7.appendChild(delBtn);
 
-      // Delete
-      `<div style="text-align:center"><button onclick="parsedRows.splice(${idx},1);renderParsedRows()" style="background:none;border:none;color:#4F5068;cursor:pointer;font-size:16px;line-height:1;padding:2px 6px" onmouseover="this.style.color='#F43F5E'" onmouseout="this.style.color='#4F5068'">×</button></div>` +
+    tr.appendChild(td1);tr.appendChild(td2);tr.appendChild(td3);
+    tr.appendChild(td4);tr.appendChild(td5);tr.appendChild(td6);tr.appendChild(td7);
 
-    `</div>`;
-  }
+    // Append to table (create table if first row)
+    var tbl=body.querySelector('table');
+    if(!tbl){tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse';body.appendChild(tbl);}
+    tbl.appendChild(tr);
+  });
 
-  body.innerHTML = out;
   syncAllChk();
   refreshPTotals();
 }
@@ -2214,7 +2267,7 @@ if(importBtn)importBtn.onclick=()=>gotoPage('import');
 // Init — show auth screen, hide app
 el('app').style.display='none';
 buildMonthTabs();
-console.log('FinanceAI v15 LEDGER loaded — waiting for Firebase auth...');
+console.log('FinanceAI v16 DOM loaded — waiting for Firebase auth...');
 </script>
 </body>
 </html>
